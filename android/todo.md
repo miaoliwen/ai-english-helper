@@ -1,8 +1,7 @@
-# Make Vision Model Optional — Todo
+# Camera UI Redesign — Todo
 
-- [x] 1. RetrofitClient: add vision_enabled pref, improve isVisionConfigured
-- [x] 2. activity_api_settings.xml: vision toggle, optional subtitle, info icon
-- [x] 3. ApiSettingsActivity.java: handle new toggle, remove vision URL validation
-- [x] 4. ResultActivity.java: skip OCR when not configured/enabled, send image direct
-- [ ] 5. Build & verify
-- [ ] 6. Commit
+- [ ] 1. New drawables: capture ring, top/bottom gradients, flash icons, gallery circle bg
+- [ ] 2. activity_camera.xml — full redesign
+- [ ] 3. CameraActivity.java — flash toggle, updated bindings
+- [ ] 4. Build & verify
+- [ ] 5. Commit

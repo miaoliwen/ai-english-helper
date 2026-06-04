@@ -1,14 +1,20 @@
 package com.aienglish.helper;
 
 import android.Manifest;
-import android.content.ContentResolver;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.ContentValues;
-import android.content.pm.PackageManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,19 +30,22 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
 import com.aienglish.helper.utils.AppExecutors;
-import com.google.android.material.button.MaterialButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class CameraActivity extends AppCompatActivity {
 
     private PreviewView previewView;
-    private MaterialButton btnCapture;
-    private MaterialButton btnGallery;
+    private ImageButton btnCapture;
+    private ImageButton btnGallery;
+    private ImageButton btnClose;
+    private ImageButton btnFlash;
+    private TextView tvCameraHint;
     private ImageCapture imageCapture;
+
+    @ImageCapture.FlashMode
+    private int flashMode = ImageCapture.FLASH_MODE_OFF;
 
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -64,15 +73,23 @@ public class CameraActivity extends AppCompatActivity {
         previewView = findViewById(R.id.previewView);
         btnCapture = findViewById(R.id.btn_capture);
         btnGallery = findViewById(R.id.btn_gallery);
+        btnClose = findViewById(R.id.btn_close);
+        btnFlash = findViewById(R.id.btn_flash);
+        tvCameraHint = findViewById(R.id.tv_camera_hint);
 
         // Close button
-        findViewById(R.id.toolbar_camera).setOnClickListener(v -> finish());
+        btnClose.setOnClickListener(v -> finish());
 
-        // Capture button — 拍照
-        btnCapture.setOnClickListener(v -> takePhoto());
+        // Capture button — 拍照 (with press animation)
+        btnCapture.setOnClickListener(v -> {
+            animateCapturePress(() -> takePhoto());
+        });
 
         // Gallery button — 从相册选取
         btnGallery.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
+
+        // Flash toggle — cycle OFF → ON → AUTO
+        btnFlash.setOnClickListener(v -> cycleFlashMode());
 
         // Request camera permission and start
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -82,6 +99,55 @@ public class CameraActivity extends AppCompatActivity {
             requestPermissionLauncher.launch(Manifest.permission.CAMERA);
         }
     }
+
+    // ======================== Flash Toggle ========================
+
+    private void cycleFlashMode() {
+        switch (flashMode) {
+            case ImageCapture.FLASH_MODE_OFF:
+                flashMode = ImageCapture.FLASH_MODE_ON;
+                btnFlash.setImageResource(R.drawable.ic_flash_on);
+                Toast.makeText(this, "闪光灯：开", Toast.LENGTH_SHORT).show();
+                break;
+            case ImageCapture.FLASH_MODE_ON:
+                flashMode = ImageCapture.FLASH_MODE_AUTO;
+                btnFlash.setImageResource(R.drawable.ic_flash_auto);
+                Toast.makeText(this, "闪光灯：自动", Toast.LENGTH_SHORT).show();
+                break;
+            case ImageCapture.FLASH_MODE_AUTO:
+            default:
+                flashMode = ImageCapture.FLASH_MODE_OFF;
+                btnFlash.setImageResource(R.drawable.ic_flash_off);
+                Toast.makeText(this, "闪光灯：关", Toast.LENGTH_SHORT).show();
+                break;
+        }
+        if (imageCapture != null) {
+            imageCapture.setFlashMode(flashMode);
+        }
+    }
+
+    // ======================== Capture Animation ========================
+
+    /** Brief scale-down animation on the capture ring to simulate a shutter press */
+    private void animateCapturePress(Runnable onFinish) {
+        ValueAnimator animator = ValueAnimator.ofFloat(1f, 0.85f, 1f);
+        animator.setDuration(200);
+        animator.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            float scale = (float) animation.getAnimatedValue();
+            btnCapture.setScaleX(scale);
+            btnCapture.setScaleY(scale);
+        });
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                onFinish.run();
+            }
+        });
+        animator.start();
+    }
+
+    // ======================== Camera Setup ========================
 
     /** 携带图片 URI 跳转到结果页 */
     private void navigateToResult(Uri imageUri) {
@@ -116,6 +182,7 @@ public class CameraActivity extends AppCompatActivity {
 
         imageCapture = new ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .setFlashMode(flashMode)
                 .build();
 
         cameraProvider.unbindAll();
@@ -125,7 +192,9 @@ public class CameraActivity extends AppCompatActivity {
     private void takePhoto() {
         if (imageCapture == null) return;
 
-        // Create content values for the photo
+        // Hide hint once user takes a photo
+        tvCameraHint.setVisibility(View.GONE);
+
         ContentValues contentValues = new ContentValues();
         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, "AI_English_" + System.currentTimeMillis());
         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
@@ -159,10 +228,5 @@ public class CameraActivity extends AppCompatActivity {
                         Toast.makeText(CameraActivity.this, "拍照失败", Toast.LENGTH_SHORT).show());
             }
         });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 }

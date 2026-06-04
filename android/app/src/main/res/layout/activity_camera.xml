@@ -5,53 +5,113 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- Camera Preview -->
+    <!-- Full-screen camera preview -->
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Top bar with close button -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar_camera"
+    <!-- Top gradient overlay -->
+    <View
+        android:id="@+id/gradient_top"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@android:color/transparent"
-        android:theme="@style/ThemeOverlay.Material3.ActionBar"
-        app:navigationIcon="@drawable/ic_close"
-        app:navigationContentDescription="关闭"
-        app:titleTextColor="@color/on_primary" />
+        android:layout_height="120dp"
+        android:layout_gravity="top"
+        android:background="@drawable/bg_camera_top_gradient" />
 
-    <!-- Bottom capture controls -->
+    <!-- Close button — top-left, floating circle -->
+    <ImageButton
+        android:id="@+id/btn_close"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="48dp"
+        android:layout_gravity="top|start"
+        android:src="@drawable/ic_close"
+        android:tint="@android:color/white"
+        android:background="@drawable/bg_control_circle"
+        android:scaleType="centerInside"
+        android:contentDescription="关闭"
+        android:elevation="4dp" />
+
+    <!-- Flash toggle — top-right, floating circle -->
+    <ImageButton
+        android:id="@+id/btn_flash"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="48dp"
+        android:layout_gravity="top|end"
+        android:src="@drawable/ic_flash_off"
+        android:background="@drawable/bg_control_circle"
+        android:scaleType="centerInside"
+        android:contentDescription="闪光灯"
+        android:elevation="4dp" />
+
+    <!-- Hint text — center overlay -->
+    <TextView
+        android:id="@+id/tv_camera_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="160dp"
+        android:text="将题目对准取景框拍摄"
+        android:textColor="#BFFFFFFF"
+        android:textSize="@dimen/text_body_small"
+        android:alpha="0.9" />
+
+    <!-- Bottom gradient overlay -->
+    <View
+        android:id="@+id/gradient_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_camera_bottom" />
+
+    <!-- Bottom controls -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:layout_marginBottom="48dp"
         android:orientation="horizontal"
         android:gravity="center"
-        android:padding="@dimen/spacing_lg"
-        android:background="@drawable/bg_camera_bottom">
+        android:paddingHorizontal="@dimen/spacing_xl">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_gallery"
-            android:layout_width="56dp"
+        <!-- Gallery thumbnail button — left -->
+        <FrameLayout
+            android:layout_width="0dp"
             android:layout_height="56dp"
-            android:src="@drawable/ic_gallery"
-            android:background="@drawable/bg_capture_button"
-            android:layout_marginEnd="@dimen/spacing_xl"
-            app:iconSize="28dp"
-            app:iconGravity="textStart"
-            style="@style/Widget.Material3.Button.Icon" />
+            android:layout_weight="1"
+            android:gravity="center">
 
-        <com.google.android.material.button.MaterialButton
+            <ImageButton
+                android:id="@+id/btn_gallery"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@drawable/ic_gallery"
+                android:tint="@android:color/white"
+                android:background="@drawable/bg_control_circle"
+                android:scaleType="centerInside"
+                android:contentDescription="相册" />
+        </FrameLayout>
+
+        <!-- Capture ring button — center -->
+        <ImageButton
             android:id="@+id/btn_capture"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:src="@drawable/ic_capture"
-            android:background="@drawable/bg_capture_button"
-            app:iconSize="36dp"
-            app:iconGravity="textStart"
-            style="@style/Widget.Material3.Button.Icon" />
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@android:color/transparent"
+            android:background="@drawable/bg_capture_ring"
+            android:scaleType="fitCenter"
+            android:contentDescription="拍照"
+            android:elevation="8dp" />
+
+        <!-- Spacer — right (symmetry) -->
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1" />
 
     </LinearLayout>
 
