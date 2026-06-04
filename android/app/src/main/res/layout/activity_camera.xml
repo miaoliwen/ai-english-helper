@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- Camera Preview -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Top bar with close button -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar_camera"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        android:theme="@style/ThemeOverlay.Material3.ActionBar"
+        app:navigationIcon="@drawable/ic_close"
+        app:navigationContentDescription="关闭"
+        app:titleTextColor="@color/on_primary" />
+
+    <!-- Bottom capture controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="@dimen/spacing_lg"
+        android:background="@drawable/bg_camera_bottom">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_gallery"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_gallery"
+            android:background="@drawable/bg_capture_button"
+            android:layout_marginEnd="@dimen/spacing_xl"
+            app:iconSize="28dp"
+            app:iconGravity="textStart"
+            style="@style/Widget.Material3.Button.Icon" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_capture"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/ic_capture"
+            android:background="@drawable/bg_capture_button"
+            app:iconSize="36dp"
+            app:iconGravity="textStart"
+            style="@style/Widget.Material3.Button.Icon" />
+
+    </LinearLayout>
+
+</FrameLayout>

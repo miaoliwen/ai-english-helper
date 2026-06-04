@@ -144,6 +144,15 @@ import { recognizeImage, mockRecognizeImage } from '@/services/mimo'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import ExportPanel from '@/components/ExportPanel.vue'
 
+// Capacitor Camera — 仅在原生 Android/iOS 环境中可用
+let CapacitorCamera: any = null
+try {
+  const cap = await import('@capacitor/camera')
+  CapacitorCamera = cap.Camera
+} catch {
+  // 浏览器环境：不使用 Camera 插件
+}
+
 const USE_REAL_API = true
 
 const store = useAppStore()
@@ -163,8 +172,34 @@ onMounted(() => {
   }
 })
 
+/** 在原生环境中优先用系统相机/相册，浏览器中回退到文件选择 */
+async function pickImage() {
+  if (CapacitorCamera) {
+    try {
+      const photo = await CapacitorCamera.getPhoto({
+        resultType: 'Base64',
+        source: 0, // CameraSource.Prompt — 让用户选择拍照或从相册选
+        quality: 90,
+        width: 1920,
+        height: 1920
+      })
+      // Capacitor 返回的 base64String 不含 data:image/... 前缀
+      previewImage.value = `data:image/${photo.format};base64,${photo.base64String}`
+    } catch (err: any) {
+      // 用户取消或权限拒绝 — 静默回退到文件选择
+      if (err?.message !== 'User cancelled photos app') {
+        console.warn('[Camera] 调用失败，回退到文件选择:', err)
+        fileInput.value?.click()
+      }
+    }
+  } else {
+    // 浏览器环境：打开文件选择器
+    fileInput.value?.click()
+  }
+}
+
 function triggerFileInput() {
-  fileInput.value?.click()
+  pickImage()
 }
 
 function handleFileSelect(e: Event) {
