@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">AI英语解题助手</string>
-    <string name="title_activity_main">AI英语解题助手</string>
-    <string name="package_name">com.aienglish.helper</string>
-    <string name="custom_url_scheme">com.aienglish.helper</string>
-    <string name="ocr_prompt">You are an OCR assistant. Extract ALL text from the image verbatim, including LaTeX math expressions, punctuation, and line breaks. Preserve the original language. Return only the extracted text without any commentary or explanation.</string>
-</resources>
