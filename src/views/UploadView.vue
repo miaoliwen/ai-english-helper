@@ -75,12 +75,22 @@
 
       <!-- Results Panel -->
       <div class="lg:col-span-3 space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <div class="section-label">OCR Result</div>
             <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">识别结果</h2>
           </div>
-          <ExportPanel v-if="ocrResult" :content="ocrResult.markdown" :title="'OCR识别结果'" />
+          <div class="flex items-center gap-2">
+            <ModelSwitcher
+              kind="vision"
+              :presets="store.modelPresets.vision"
+              :active-id="store.modelPresets.activeVisionId"
+              :disabled="isProcessing"
+              @select="onSelectVision"
+              @manage="openSettings"
+            />
+            <ExportPanel v-if="ocrResult" :content="ocrResult.markdown" :title="'OCR识别结果'" />
+          </div>
         </div>
 
         <div v-if="!ocrResult && !isProcessing" class="card-surface p-16 text-center">
@@ -121,18 +131,34 @@
           <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">历史记录</h3>
           <div class="space-y-2">
             <div v-for="item in store.recentOCRs.slice(0, 5)" :key="item.id"
-                 @click="loadHistory(item.id)"
-                 class="flex items-center gap-3 p-3 bg-white rounded-2xl border border-neutral-100 cursor-pointer hover:border-accent-200 transition-all duration-300">
+                 class="group flex items-center gap-3 p-3 bg-white rounded-2xl border border-neutral-100 cursor-pointer hover:border-accent-200 transition-all duration-300"
+                 @click="loadHistory(item.id)">
               <img :src="item.imageBase64" class="w-11 h-11 rounded-xl object-cover bg-neutral-100"/>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">{{ item.text.slice(0, 40) }}...</p>
                 <p class="text-xs text-neutral-400 font-mono">{{ formatDate(item.createdAt) }}</p>
               </div>
+              <button @click.stop="removeHistory(item.id)" :title="'删除该记录'"
+                      class="p-1.5 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Toast -->
+    <Transition name="scale">
+      <div v-if="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl shadow-lg text-sm font-medium"
+           :class="toast.type === 'success' ? 'bg-neutral-900 text-white' : 'bg-red-600 text-white'">
+        {{ toast.message }}
+      </div>
+    </Transition>
+
+    <SettingsModal v-model:visible="isSettingsOpen" />
   </div>
 </template>
 
@@ -143,15 +169,8 @@ import { useAppStore } from '@/stores/app'
 import { recognizeImage, mockRecognizeImage } from '@/services/mimo'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import ExportPanel from '@/components/ExportPanel.vue'
-
-// Capacitor Camera — 仅在原生 Android/iOS 环境中可用
-let CapacitorCamera: any = null
-try {
-  const cap = await import('@capacitor/camera')
-  CapacitorCamera = cap.Camera
-} catch {
-  // 浏览器环境：不使用 Camera 插件
-}
+import ModelSwitcher from '@/components/ModelSwitcher.vue'
+import SettingsModal from '@/components/SettingsModal.vue'
 
 const USE_REAL_API = true
 
@@ -162,8 +181,24 @@ const fileInput = ref<HTMLInputElement>()
 const isDragging = ref(false)
 const previewImage = ref('')
 const isProcessing = ref(false)
+const toast = ref<{ type: 'success' | 'error'; message: string } | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(type: 'success' | 'error', message: string) {
+  toast.value = { type, message }
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { toast.value = null }, 2400)
+}
 
 const ocrResult = computed(() => store.currentOCR)
+
+const isSettingsOpen = ref(false)
+function openSettings() { isSettingsOpen.value = true }
+
+async function onSelectVision(id: string) {
+  await store.setActiveVisionPreset(id)
+  showToast('success', '已切换视觉模型')
+}
 
 onMounted(() => {
   store.loadRecents()
@@ -172,34 +207,8 @@ onMounted(() => {
   }
 })
 
-/** 在原生环境中优先用系统相机/相册，浏览器中回退到文件选择 */
-async function pickImage() {
-  if (CapacitorCamera) {
-    try {
-      const photo = await CapacitorCamera.getPhoto({
-        resultType: 'Base64',
-        source: 0, // CameraSource.Prompt — 让用户选择拍照或从相册选
-        quality: 90,
-        width: 1920,
-        height: 1920
-      })
-      // Capacitor 返回的 base64String 不含 data:image/... 前缀
-      previewImage.value = `data:image/${photo.format};base64,${photo.base64String}`
-    } catch (err: any) {
-      // 用户取消或权限拒绝 — 静默回退到文件选择
-      if (err?.message !== 'User cancelled photos app') {
-        console.warn('[Camera] 调用失败，回退到文件选择:', err)
-        fileInput.value?.click()
-      }
-    }
-  } else {
-    // 浏览器环境：打开文件选择器
-    fileInput.value?.click()
-  }
-}
-
 function triggerFileInput() {
-  pickImage()
+  fileInput.value?.click()
 }
 
 function handleFileSelect(e: Event) {
@@ -237,9 +246,10 @@ async function startOCR() {
         })
       : await mockRecognizeImage(previewImage.value)
     await store.createOCRResult(previewImage.value, result.text, result.markdown)
+    showToast('success', '识别完成')
   } catch (error) {
     const message = error instanceof Error ? error.message : '识别失败'
-    alert(message)
+    showToast('error', message)
   } finally {
     isProcessing.value = false
   }
@@ -254,6 +264,15 @@ async function loadHistory(id: string) {
   if (store.currentOCR) previewImage.value = store.currentOCR.imageBase64
 }
 
+async function removeHistory(id: string) {
+  if (!confirm('确定要删除这条历史记录吗？')) return
+  await store.deleteOCR(id)
+  if (previewImage.value && store.currentOCR === null) {
+    previewImage.value = ''
+  }
+  showToast('success', '已删除')
+}
+
 async function addToFavorites() {
   if (!store.currentOCR) return
   await store.addToFavorites({
@@ -263,7 +282,7 @@ async function addToFavorites() {
     ocrResultId: store.currentOCR.id,
     tags: ['OCR', '识别']
   })
-  alert('已添加到收藏')
+  showToast('success', '已添加到收藏')
 }
 
 function formatDate(timestamp: number): string {
