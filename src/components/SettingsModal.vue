@@ -27,7 +27,7 @@
         <!-- Tabs -->
         <div class="px-6 pt-4 flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 shrink-0">
           <button v-for="t in tabs" :key="t.value" @click="activeTab = t.value"
-                  class="px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px"
+                  class="px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px"
                   :class="activeTab === t.value
                     ? 'border-accent-600 text-accent-600'
                     : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'">
@@ -42,7 +42,7 @@
             <!-- Preset list (desktop: 始终可见; mobile: 仅在 mobileStep==='list' 时可见) -->
             <div class="md:border-r border-neutral-100 dark:border-neutral-800 p-3 space-y-1 md:max-h-[60vh] md:overflow-y-auto"
                  :class="mobileStep === 'list' ? 'block' : 'hidden md:block'">
-              <button @click="addNew" class="w-full flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-accent-600 hover:bg-accent-50 dark:hover:bg-accent-900/20 transition-colors">
+              <button @click="addNew" class="w-full flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm text-accent-600 hover:bg-accent-50 dark:hover:bg-accent-900/20 transition-colors touch-target">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                 </svg>
@@ -65,11 +65,11 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
                   </svg>
                 </div>
-                <p class="text-[11px] text-neutral-400 truncate mt-0.5 font-mono">
+                <p class="text-xs text-neutral-400 truncate mt-0.5 font-mono">
                   {{ p.modelId || '—' }}
                 </p>
                 <button v-if="currentList.length > 1" @click.stop="remove(p.id)"
-                        class="mt-1 text-[11px] text-neutral-400 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        class="mt-1 px-2 py-1 rounded-md text-xs text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 sm:opacity-0 sm:group-hover:opacity-100 transition-all touch-target">
                   删除
                 </button>
               </div>
@@ -90,20 +90,20 @@
               <template v-if="editing">
                 <div>
                   <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">预设昵称</label>
-                  <input v-model="editing.name" type="text" placeholder="例如：DeepSeek 主力" class="input-field text-sm" />
+                  <input v-model="editing.name" type="text" placeholder="例如：DeepSeek 主力" enterkeyhint="next" autocomplete="off" class="input-field text-sm" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">模型 ID</label>
-                  <input v-model="editing.modelId" type="text" placeholder="例如：deepseek-chat" class="input-field text-sm" />
+                  <input v-model="editing.modelId" type="text" placeholder="例如：deepseek-chat" enterkeyhint="next" autocomplete="off" class="input-field text-sm" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">Base URL</label>
-                  <input v-model="editing.baseUrl" type="text" placeholder="例如：https://api.deepseek.com" class="input-field text-sm" />
+                  <input v-model="editing.baseUrl" type="text" placeholder="例如：https://api.deepseek.com" inputmode="url" enterkeyhint="next" autocomplete="url" class="input-field text-sm" />
                 </div>
                 <div>
                   <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">API Key</label>
                   <div class="relative">
-                    <input v-model="editing.apiKey" :type="showKey ? 'text' : 'password'" placeholder="sk-..." class="input-field text-sm pr-12" />
+                    <input v-model="editing.apiKey" :type="showKey ? 'text' : 'password'" placeholder="sk-..." enterkeyhint="done" autocomplete="off" class="input-field text-sm pr-12" />
                     <button @click="showKey = !showKey" type="button" :aria-label="showKey ? '隐藏 API Key' : '显示 API Key'" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 touch-target">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                         <path v-if="showKey" stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>
@@ -141,7 +141,7 @@
 
         <!-- Footer -->
         <div class="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-end gap-3 shrink-0">
-          <button @click="close" class="btn-ghost text-sm">关闭</button>
+          <button @click="close" class="btn-ghost text-sm touch-target">关闭</button>
         </div>
       </div>
     </div>

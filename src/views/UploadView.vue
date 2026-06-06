@@ -33,7 +33,7 @@
         <div v-if="previewImage" class="card-surface p-4">
           <div class="flex items-center justify-between mb-3">
             <span class="text-sm font-semibold text-neutral-700 dark:text-neutral-300">图片预览</span>
-            <button @click="clearImage" class="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+            <button @click="clearImage" class="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all touch-target">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
               </svg>
@@ -93,7 +93,7 @@
           </div>
         </div>
 
-        <div v-if="!ocrResult && !isProcessing" class="card-surface p-16 text-center">
+        <div v-if="!ocrResult && !isProcessing" class="card-surface p-8 sm:p-12 lg:p-16 text-center">
           <div class="w-14 h-14 bg-neutral-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg class="w-7 h-7 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
@@ -114,7 +114,7 @@
         <div v-else-if="ocrResult" class="card-surface overflow-hidden">
           <div class="px-6 py-4 bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-100 flex items-center justify-between">
             <span class="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Markdown</span>
-            <button @click="addToFavorites" class="flex items-center gap-1.5 text-sm text-accent-600 hover:text-accent-700 font-medium transition-colors">
+            <button @click="addToFavorites" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-accent-600 hover:text-accent-700 hover:bg-accent-50 font-medium transition-colors touch-target">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0111.186 0z"/>
               </svg>

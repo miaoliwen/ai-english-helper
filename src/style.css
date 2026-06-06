@@ -310,6 +310,9 @@ html.dark .markdown-content blockquote {
 
 .markdown-content table {
   @apply w-full border-collapse mb-5;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .markdown-content th,

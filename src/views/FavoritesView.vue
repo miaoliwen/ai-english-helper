@@ -8,6 +8,7 @@
       </div>
       <div class="relative">
         <input v-model="searchQuery" @input="handleSearch" type="text" placeholder="搜索收藏..."
+               inputmode="search" enterkeyhint="search" autocomplete="off"
                class="input-field pl-11 pr-4 w-full sm:w-72" />
         <svg class="w-5 h-5 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
@@ -18,7 +19,7 @@
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 mb-8">
       <button v-for="tab in tabs" :key="tab.value" @click="activeTab = tab.value"
-              class="px-5 py-2.5 rounded-2xl text-sm font-medium transition-all duration-300"
+              class="px-5 py-3 rounded-2xl text-sm font-medium transition-all duration-300"
               :class="activeTab === tab.value ? 'bg-accent-600 text-white shadow-glow' : 'bg-white text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'">
         {{ tab.label }}
       </button>

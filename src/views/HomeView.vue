@@ -39,7 +39,7 @@
           <router-link
             v-if="recentItems.length > 0"
             to="/favorites"
-            class="text-sm text-accent-600 hover:text-accent-700"
+            class="text-sm text-accent-600 hover:text-accent-700 px-2 py-1 -mr-2 rounded-lg"
           >查看全部</router-link>
         </div>
 

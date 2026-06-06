@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[calc(100dvh-5rem)]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-[calc(100dvh-5rem-env(safe-area-inset-top,0px))]">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 h-full py-5">
       <!-- Sidebar (desktop) -->
       <div class="hidden lg:block lg:col-span-1">
@@ -69,7 +69,7 @@
                 @select="onSelectChat"
                 @manage="openSettings"
               />
-              <p class="text-[10px] text-neutral-400 font-mono truncate max-w-[160px] sm:max-w-[200px]">
+              <p class="text-xs text-neutral-400 font-mono truncate max-w-[160px] sm:max-w-[200px]">
                 {{ store.modelSettings.chatModel || '未配置' }}
               </p>
             </div>
