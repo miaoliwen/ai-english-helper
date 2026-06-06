@@ -1,7 +1,4 @@
-/**
- * 模型配置诊断工具
- * 帮助用户验证 API 配置是否正确
- */
+import { buildChatCompletionsEndpoint, readApiError } from '@/services/config'
 
 export interface DiagnosticResult {
   success: boolean
@@ -9,181 +6,114 @@ export interface DiagnosticResult {
   details?: string
 }
 
-export async function diagnoseDeepSeekConfig(
+async function diagnoseOpenAICompatibleConfig(
+  label: string,
   baseUrl: string,
   apiKey: string,
-  modelId: string
+  modelId: string,
+  userPrompt: string
 ): Promise<DiagnosticResult> {
-  // 1. 验证 URL 格式
-  if (!baseUrl) {
+  if (!baseUrl.trim()) {
     return {
       success: false,
       message: 'Base URL 未填写',
-      details: '请在设置中填写 DeepSeek API 的 Base URL，例如：https://api.deepseek.com'
+      details: `请填写${label}的 API 地址，例如：https://api.example.com 或 https://api.example.com/v1/chat/completions`
     }
   }
 
-  // 标准化 URL
-  let normalizedUrl = baseUrl.replace(/\/+$/, '')
-  if (normalizedUrl.endsWith('/v1/chat/completions')) {
-    normalizedUrl = normalizedUrl.replace('/v1/chat/completions', '')
-  }
-
-  // 2. 验证 API Key
-  if (!apiKey) {
+  if (!apiKey.trim()) {
     return {
       success: false,
       message: 'API Key 未填写',
-      details: '请在设置中填写 DeepSeek API Key'
+      details: `请填写${label}的 API Key。若使用自建代理，也可以填写代理服务约定的访问令牌。`
     }
   }
 
-  if (!apiKey.startsWith('sk-')) {
-    return {
-      success: false,
-      message: 'API Key 格式可能不正确',
-      details: 'DeepSeek API Key 通常以 sk- 开头，请检查是否正确'
-    }
-  }
-
-  // 3. 验证 Model ID
-  if (!modelId) {
+  if (!modelId.trim()) {
     return {
       success: false,
       message: '模型 ID 未填写',
-      details: '请在设置中填写模型 ID，例如：deepseek-chat 或 deepseek-v4-flash'
+      details: `请填写${label}的模型 ID，例如 deepseek-chat、gpt-4o-mini 或服务商文档中的模型名。`
     }
   }
 
-  // 4. 测试 API 连接
+  let endpoint = ''
   try {
-    const apiUrl = `${normalizedUrl}/v1/chat/completions`
-    console.log('[诊断] 测试 URL:', apiUrl)
+    endpoint = buildChatCompletionsEndpoint(baseUrl)
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Base URL 格式不正确',
+      details: error instanceof Error ? error.message : '请检查 URL 是否完整'
+    }
+  }
 
-    const response = await fetch(apiUrl, {
+  try {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        Authorization: `Bearer ${apiKey.trim()}`
       },
       body: JSON.stringify({
-        model: modelId,
-        messages: [{ role: 'user', content: 'Hello' }],
-        max_tokens: 10
+        model: modelId.trim(),
+        messages: [{ role: 'user', content: userPrompt }],
+        max_tokens: 16,
+        temperature: 0
       })
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
       return {
         success: false,
-        message: `API 返回错误: ${response.status}`,
-        details: errorData.error?.message || response.statusText
+        message: `API 返回错误：${response.status}`,
+        details: await readApiError(response, label)
       }
     }
 
     return {
       success: true,
-      message: 'DeepSeek API 配置正确！',
-      details: `成功连接到 ${normalizedUrl}，模型 ${modelId} 可用`
+      message: `${label}配置可用`,
+      details: `已成功连接 ${endpoint}，模型 ${modelId.trim()} 可访问。`
     }
   } catch (error) {
     return {
       success: false,
       message: '无法连接到 API',
-      details: error instanceof Error ? error.message : '网络错误，请检查 URL 是否正确'
+      details: error instanceof Error ? error.message : '网络错误，请检查 URL、代理或浏览器跨域策略'
     }
   }
 }
 
-export async function diagnoseMimoConfig(
+export function diagnoseDeepSeekConfig(
   baseUrl: string,
   apiKey: string,
   modelId: string
 ): Promise<DiagnosticResult> {
-  // 1. 验证 URL 格式
-  if (!baseUrl) {
-    return {
-      success: false,
-      message: 'Base URL 未填写',
-      details: '请在设置中填写 Mimo API 的完整端点 URL，例如：https://api.xiaomimimo.com/v1/chat/completions'
-    }
-  }
-
-  // 2. 验证 API Key
-  if (!apiKey) {
-    return {
-      success: false,
-      message: 'API Key 未填写',
-      details: '请在设置中填写 Mimo API Key'
-    }
-  }
-
-  // 3. 验证 Model ID
-  if (!modelId) {
-    return {
-      success: false,
-      message: '模型 ID 未填写',
-      details: '请在设置中填写模型 ID，例如：mimo-v2.5'
-    }
-  }
-
-  // 4. 测试 API 连接（发送一个简单的文本请求）
-  try {
-    console.log('[诊断] 测试 Mimo URL:', baseUrl)
-
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: modelId,
-        messages: [{ role: 'user', content: 'Hello' }],
-        max_tokens: 10
-      })
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      return {
-        success: false,
-        message: `API 返回错误: ${response.status}`,
-        details: errorData.error?.message || response.statusText
-      }
-    }
-
-    return {
-      success: true,
-      message: 'Mimo API 配置正确！',
-      details: `成功连接到 ${baseUrl}，模型 ${modelId} 可用`
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message: '无法连接到 API',
-      details: error instanceof Error ? error.message : '网络错误，请检查 URL 是否正确'
-    }
-  }
+  return diagnoseOpenAICompatibleConfig('对话模型', baseUrl, apiKey, modelId, 'Reply with OK.')
 }
 
-/**
- * 获取配置示例和说明
- */
+export function diagnoseMimoConfig(
+  baseUrl: string,
+  apiKey: string,
+  modelId: string
+): Promise<DiagnosticResult> {
+  return diagnoseOpenAICompatibleConfig('视觉模型', baseUrl, apiKey, modelId, 'Reply with OK.')
+}
+
 export function getConfigExamples() {
   return {
-    deepseek: {
+    chat: {
       baseUrl: 'https://api.deepseek.com',
       apiKey: 'sk-xxxxxxxxxxxxxxxxxxxxxxxx',
       modelId: 'deepseek-chat',
-      description: '对话模型只需填写基础 URL，代码会自动添加 /v1/chat/completions'
+      description: '可填写基础 URL、/v1 地址或完整 /v1/chat/completions 端点。'
     },
-    mimo: {
-      baseUrl: 'https://api.xiaomimimo.com/v1/chat/completions',
+    vision: {
+      baseUrl: 'https://api.example.com/v1/chat/completions',
       apiKey: 'sk-xxxxxxxxxxxxxxxxxxxxxxxx',
-      modelId: 'mimo-v2.5',
-      description: '视觉模型需要填写完整的 API 端点 URL'
+      modelId: 'gpt-4o-mini',
+      description: '视觉模型需支持 OpenAI 兼容的 image_url 消息格式。'
     }
   }
 }

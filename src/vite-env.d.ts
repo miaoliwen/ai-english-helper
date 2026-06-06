@@ -1,13 +1,10 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_MIMO_API_KEY: string
-  readonly VITE_MIMO_API_URL: string
-  readonly VITE_MIMO_MODEL_ID: string
-  readonly VITE_DEEPSEEK_API_KEY: string
-  readonly VITE_DEEPSEEK_API_URL: string
-  readonly VITE_DEEPSEEK_MODEL_ID: string
-  readonly VITE_PROXY_API_URL?: string
+  readonly VITE_DEFAULT_CHAT_BASE_URL?: string
+  readonly VITE_DEFAULT_VISION_BASE_URL?: string
+  readonly VITE_DEFAULT_CHAT_MODEL?: string
+  readonly VITE_DEFAULT_VISION_MODEL?: string
 }
 
 interface ImportMeta {

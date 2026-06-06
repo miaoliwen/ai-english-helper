@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-[100dvh] bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
     <AppNavigation />
-    <main class="pt-20">
+    <main class="pt-nav">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />

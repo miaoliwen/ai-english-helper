@@ -150,6 +150,85 @@
   .animation-delay-300 { animation-delay: 300ms; }
   .animation-delay-400 { animation-delay: 400ms; }
   .animation-delay-500 { animation-delay: 500ms; }
+
+  /* iOS/Android safe-area helpers（与 viewport-fit=cover 配合使用） */
+  .pt-safe { padding-top: max(1rem, env(safe-area-inset-top)); }
+  .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .pl-safe { padding-left: max(1rem, env(safe-area-inset-left)); }
+  .pr-safe { padding-right: max(1rem, env(safe-area-inset-right)); }
+  .top-safe { top: max(1rem, env(safe-area-inset-top)); }
+  .bottom-safe { bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .inset-x-safe { left: max(1rem, env(safe-area-inset-left)); right: max(1rem, env(safe-area-inset-right)); }
+
+  /* 固定 nav 高度的"主内容"补白：navbar ≈ 64px + 顶部 16px gap + safe-area */
+  .pt-nav {
+    padding-top: calc(5rem + env(safe-area-inset-top));
+  }
+  /* 底部固定输入区 + home indicator 留白 */
+  .pb-nav { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  /* 全局：触控元素最小 44×44（Apple HIG / Material） */
+  .touch-target { min-width: 2.75rem; min-height: 2.75rem; }
+}
+
+/* Home: aurora glow background */
+@keyframes aurora-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(40px, -30px, 0) scale(1.08); }
+}
+@keyframes aurora-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-50px, 20px, 0) scale(1.12); }
+}
+@keyframes aurora-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(20px, 40px, 0) scale(0.95); }
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform;
+}
+.aurora-a { animation: aurora-drift-a 18s ease-in-out infinite; }
+.aurora-b { animation: aurora-drift-b 22s ease-in-out infinite; }
+.aurora-c { animation: aurora-drift-c 26s ease-in-out infinite; }
+
+/* Home: floating letters */
+@keyframes letter-rise {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg);   opacity: 0; }
+  10%  { opacity: 0.18; }
+  50%  { transform: translate3d(var(--drift, 0px), -50vh, 0) rotate(8deg); opacity: 0.22; }
+  90%  { opacity: 0.10; }
+  100% { transform: translate3d(calc(var(--drift, 0px) * 1.4), -110vh, 0) rotate(-6deg); opacity: 0; }
+}
+.floating-letter {
+  position: absolute;
+  bottom: -10vh;
+  font-family: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 600;
+  color: rgb(16 185 129 / 0.18);
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
+  animation: letter-rise linear infinite;
+  white-space: nowrap;
+}
+html.dark .floating-letter {
+  color: rgb(110 231 183 / 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-a, .aurora-b, .aurora-c,
+  .floating-letter { animation: none !important; }
+  .aurora-blob { opacity: 0.5; }
+  .floating-letter { display: none; }
+}
+
+/* 小屏默认关闭装饰动效 —— 14 个浮动字母 + 3 个 aurora 在低端机上 60fps 难保 */
+@media (max-width: 640px) {
+  .floating-letter { display: none; }
+  .aurora-blob { filter: blur(40px); }
 }
 
 /* Markdown Content Styles */

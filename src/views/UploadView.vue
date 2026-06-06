@@ -19,14 +19,14 @@
             isDragging ? 'border-accent-400 bg-accent-50/50' : 'border-neutral-200 dark:border-neutral-700 hover:border-accent-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
           ]"
         >
-          <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileSelect" />
+          <input ref="fileInput" type="file" accept="image/*" capture="environment" class="hidden" @change="handleFileSelect" />
           <div class="w-16 h-16 bg-accent-50 rounded-2xl flex items-center justify-center mx-auto mb-5 transition-transform duration-300" :class="isDragging ? 'scale-110' : ''">
             <svg class="w-7 h-7 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
             </svg>
           </div>
-          <p class="text-neutral-700 dark:text-neutral-300 font-medium mb-2">点击或拖拽图片到此处</p>
-          <p class="text-sm text-neutral-400 font-mono">JPG, PNG, GIF</p>
+          <p class="text-neutral-700 dark:text-neutral-300 font-medium mb-2">点击拍照 / 选择文件 / 拖拽图片</p>
+          <p class="text-sm text-neutral-400 font-mono">JPG, PNG · 建议 5 MB 以内</p>
         </div>
 
         <!-- Preview -->
@@ -74,7 +74,7 @@
       </div>
 
       <!-- Results Panel -->
-      <div class="lg:col-span-3 space-y-6">
+      <div ref="resultsPanel" class="lg:col-span-3 space-y-6">
         <div class="flex items-center justify-between gap-3 flex-wrap">
           <div>
             <div class="section-label">OCR Result</div>
@@ -138,8 +138,8 @@
                 <p class="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">{{ item.text.slice(0, 40) }}...</p>
                 <p class="text-xs text-neutral-400 font-mono">{{ formatDate(item.createdAt) }}</p>
               </div>
-              <button @click.stop="removeHistory(item.id)" :title="'删除该记录'"
-                      class="p-1.5 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+              <button @click.stop="removeHistory(item.id)" :title="'删除该记录'" aria-label="删除历史记录"
+                      class="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all touch-target shrink-0">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -150,9 +150,10 @@
       </div>
     </div>
 
-    <!-- Toast -->
+    <!-- Toast: 使用 top-safe 避开刘海 -->
     <Transition name="scale">
-      <div v-if="toast" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl shadow-lg text-sm font-medium"
+      <div v-if="toast" class="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl shadow-lg text-sm font-medium"
+           :style="{ top: `max(5.5rem, calc(env(safe-area-inset-top, 0px) + 1rem))` }"
            :class="toast.type === 'success' ? 'bg-neutral-900 text-white' : 'bg-red-600 text-white'">
         {{ toast.message }}
       </div>
@@ -163,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { recognizeImage, mockRecognizeImage } from '@/services/mimo'
@@ -178,6 +179,7 @@ const store = useAppStore()
 const router = useRouter()
 
 const fileInput = ref<HTMLInputElement>()
+const resultsPanel = ref<HTMLElement>()
 const isDragging = ref(false)
 const previewImage = ref('')
 const isProcessing = ref(false)
@@ -247,6 +249,10 @@ async function startOCR() {
       : await mockRecognizeImage(previewImage.value)
     await store.createOCRResult(previewImage.value, result.text, result.markdown)
     showToast('success', '识别完成')
+    // 移动端自动滚动到结果面板
+    nextTick(() => {
+      resultsPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : '识别失败'
     showToast('error', message)

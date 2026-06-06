@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { OCRResult, ChatSession, ChatMessage, FavoriteItem, ModelSettings } from '@/types'
+import type { OCRResult, ChatSession, ChatMessage, FavoriteItem, ModelSettings, ModelPreset, ModelPresets } from '@/types'
 import { v4 as uuidv4 } from '@/utils/uuid'
 import { encryptConfig, decryptConfig } from '@/utils/crypto'
 import {
   saveOCRResult,
   getOCRResult,
   getAllOCRResults,
+  deleteOCRResult,
   saveChatSession,
   getChatSession,
   getAllChatSessions,
@@ -18,14 +19,60 @@ import {
 } from '@/db'
 
 const MODEL_SETTINGS_KEY = 'aieh-model-settings'
+const MODEL_PRESETS_KEY = 'aieh-model-presets'
+
+/** 通过 Canvas 重绘图片来剥离 EXIF 元数据（GPS、设备信息等） */
+function stripExifData(dataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    // 非 data: URL 或非图片格式，直接返回
+    if (!dataUrl.startsWith('data:image/')) {
+      resolve(dataUrl)
+      return
+    }
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { resolve(dataUrl); return }
+      ctx.drawImage(img, 0, 0)
+      // 以 JPEG 输出（质量 0.85），自动丢弃所有 EXIF
+      resolve(canvas.toDataURL('image/jpeg', 0.85))
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}
 
 const emptyModelSettings: ModelSettings = {
-  chatModel: '',
-  chatBaseUrl: '',
+  chatModel: import.meta.env.VITE_DEFAULT_CHAT_MODEL || '',
+  chatBaseUrl: import.meta.env.VITE_DEFAULT_CHAT_BASE_URL || '',
   chatApiKey: '',
-  visionModel: '',
-  visionBaseUrl: '',
+  visionModel: import.meta.env.VITE_DEFAULT_VISION_MODEL || '',
+  visionBaseUrl: import.meta.env.VITE_DEFAULT_VISION_BASE_URL || '',
   visionApiKey: ''
+}
+
+/** 从环境变量构建的"出厂默认"对话模型预设。 */
+function buildDefaultChatPreset(): ModelPreset {
+  return {
+    id: uuidv4(),
+    name: '默认对话',
+    baseUrl: import.meta.env.VITE_DEFAULT_CHAT_BASE_URL || '',
+    apiKey: '',
+    modelId: import.meta.env.VITE_DEFAULT_CHAT_MODEL || ''
+  }
+}
+
+function buildDefaultVisionPreset(): ModelPreset {
+  return {
+    id: uuidv4(),
+    name: '默认视觉',
+    baseUrl: import.meta.env.VITE_DEFAULT_VISION_BASE_URL || '',
+    apiKey: '',
+    modelId: import.meta.env.VITE_DEFAULT_VISION_MODEL || ''
+  }
 }
 
 async function loadModelSettings(): Promise<ModelSettings> {
@@ -33,7 +80,6 @@ async function loadModelSettings(): Promise<ModelSettings> {
     const saved = localStorage.getItem(MODEL_SETTINGS_KEY)
     if (saved) {
       const parsed = JSON.parse(saved)
-      // 解密配置
       const decrypted = await decryptConfig(parsed)
       return { ...emptyModelSettings, ...decrypted }
     }
@@ -42,9 +88,70 @@ async function loadModelSettings(): Promise<ModelSettings> {
 }
 
 async function saveModelSettings(settings: ModelSettings) {
-  // 加密配置
+  // 兼容旧字段写入（迁移后不再调用，新数据走 saveModelPresets）
   const encrypted = await encryptConfig(settings as unknown as Record<string, string>)
   localStorage.setItem(MODEL_SETTINGS_KEY, JSON.stringify(encrypted))
+}
+// 显式导出仅用于测试或外部强制覆盖场景
+export { saveModelSettings }
+
+/**
+ * 加载模型预设集合。若本地没有，尝试从旧版 ModelSettings 迁移成一条默认预设。
+ */
+async function loadModelPresets(): Promise<ModelPresets> {
+  // 1. 尝试读新格式
+  try {
+    const saved = localStorage.getItem(MODEL_PRESETS_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      const decrypted = await decryptConfig(parsed)
+      if (decrypted.chat || decrypted.vision) {
+        return normalizePresets(decrypted)
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 2. 迁移旧 ModelSettings
+  const legacy = await loadModelSettings()
+  const chatPreset: ModelPreset = {
+    id: uuidv4(),
+    name: '已迁移：对话模型',
+    baseUrl: legacy.chatBaseUrl,
+    apiKey: legacy.chatApiKey,
+    modelId: legacy.chatModel
+  }
+  const visionPreset: ModelPreset = {
+    id: uuidv4(),
+    name: '已迁移：视觉模型',
+    baseUrl: legacy.visionBaseUrl,
+    apiKey: legacy.visionApiKey,
+    modelId: legacy.visionModel
+  }
+  return {
+    chat: [chatPreset],
+    vision: [visionPreset],
+    activeChatId: chatPreset.id,
+    activeVisionId: visionPreset.id
+  }
+}
+
+async function saveModelPresets(presets: ModelPresets) {
+  const encrypted = await encryptConfig(presets as unknown as Record<string, string>)
+  localStorage.setItem(MODEL_PRESETS_KEY, JSON.stringify(encrypted))
+}
+
+/** 归一化：确保 activeId 指向一个真实预设，否则回退到第一个或新建默认。 */
+function normalizePresets(raw: any): ModelPresets {
+  const chat: ModelPreset[] = Array.isArray(raw?.chat) ? raw.chat : []
+  const vision: ModelPreset[] = Array.isArray(raw?.vision) ? raw.vision : []
+
+  if (chat.length === 0) chat.push(buildDefaultChatPreset())
+  if (vision.length === 0) vision.push(buildDefaultVisionPreset())
+
+  const activeChatId = chat.some((p) => p.id === raw?.activeChatId) ? raw.activeChatId : chat[0].id
+  const activeVisionId = vision.some((p) => p.id === raw?.activeVisionId) ? raw.activeVisionId : vision[0].id
+
+  return { chat, vision, activeChatId, activeVisionId }
 }
 
 export const useAppStore = defineStore('app', () => {
@@ -55,12 +162,47 @@ export const useAppStore = defineStore('app', () => {
   const recentOCRs = ref<OCRResult[]>([])
   const recentChats = ref<ChatSession[]>([])
   const favorites = ref<FavoriteItem[]>([])
-  const modelSettings = ref<ModelSettings>({ ...emptyModelSettings })
 
-  // 异步加载加密的配置
-  loadModelSettings().then(settings => {
-    modelSettings.value = settings
+  // 模型预设集合（多套）
+  const modelPresets = ref<ModelPresets>({
+    chat: [],
+    vision: [],
+    activeChatId: '',
+    activeVisionId: ''
   })
+
+  // 兼容视图：当前激活的预设展开为单配置形态，供 services 读取
+  const modelSettings = computed<ModelSettings>(() => {
+    const chat = modelPresets.value.chat.find((p) => p.id === modelPresets.value.activeChatId)
+      || modelPresets.value.chat[0]
+    const vision = modelPresets.value.vision.find((p) => p.id === modelPresets.value.activeVisionId)
+      || modelPresets.value.vision[0]
+    return {
+      chatModel: chat?.modelId || '',
+      chatBaseUrl: chat?.baseUrl || '',
+      chatApiKey: chat?.apiKey || '',
+      visionModel: vision?.modelId || '',
+      visionBaseUrl: vision?.baseUrl || '',
+      visionApiKey: vision?.apiKey || ''
+    }
+  })
+
+  // 异步加载加密的配置（迁移旧版 ModelSettings）
+  // 加 catch：解密失败时退回到空预设，UI 仍可使用（isChatModelConfigured=false → 引导用户去设置）
+  loadModelPresets()
+    .then((presets) => {
+      modelPresets.value = presets
+    })
+    .catch((error) => {
+      console.error('加载模型预设失败：', error)
+      // 提供默认空预设，至少让 UI 正常工作
+      modelPresets.value = {
+        chat: [buildDefaultChatPreset()],
+        vision: [buildDefaultVisionPreset()],
+        activeChatId: modelPresets.value.chat[0]?.id || '',
+        activeVisionId: modelPresets.value.vision[0]?.id || ''
+      }
+    })
 
   const hasCurrentOCR = computed(() => !!currentOCR.value)
   const hasCurrentChat = computed(() => !!currentChat.value)
@@ -71,6 +213,55 @@ export const useAppStore = defineStore('app', () => {
     !!(modelSettings.value.visionBaseUrl?.trim() && modelSettings.value.visionApiKey?.trim() && modelSettings.value.visionModel?.trim())
   )
 
+  const activeChatPreset = computed(() =>
+    modelPresets.value.chat.find((p) => p.id === modelPresets.value.activeChatId) || modelPresets.value.chat[0] || null
+  )
+  const activeVisionPreset = computed(() =>
+    modelPresets.value.vision.find((p) => p.id === modelPresets.value.activeVisionId) || modelPresets.value.vision[0] || null
+  )
+
+  // —— 模型预设 actions ——
+  async function setActiveChatPreset(id: string) {
+    if (!modelPresets.value.chat.some((p) => p.id === id)) return
+    modelPresets.value = { ...modelPresets.value, activeChatId: id }
+    await saveModelPresets(modelPresets.value)
+  }
+  async function setActiveVisionPreset(id: string) {
+    if (!modelPresets.value.vision.some((p) => p.id === id)) return
+    modelPresets.value = { ...modelPresets.value, activeVisionId: id }
+    await saveModelPresets(modelPresets.value)
+  }
+  async function upsertChatPreset(preset: ModelPreset) {
+    const list = [...modelPresets.value.chat]
+    const idx = list.findIndex((p) => p.id === preset.id)
+    if (idx >= 0) list[idx] = preset
+    else list.push(preset)
+    modelPresets.value = { ...modelPresets.value, chat: list }
+    await saveModelPresets(modelPresets.value)
+  }
+  async function upsertVisionPreset(preset: ModelPreset) {
+    const list = [...modelPresets.value.vision]
+    const idx = list.findIndex((p) => p.id === preset.id)
+    if (idx >= 0) list[idx] = preset
+    else list.push(preset)
+    modelPresets.value = { ...modelPresets.value, vision: list }
+    await saveModelPresets(modelPresets.value)
+  }
+  async function removeChatPreset(id: string) {
+    const list = modelPresets.value.chat.filter((p) => p.id !== id)
+    if (list.length === 0) list.push(buildDefaultChatPreset())
+    const activeId = modelPresets.value.activeChatId === id ? list[0].id : modelPresets.value.activeChatId
+    modelPresets.value = { ...modelPresets.value, chat: list, activeChatId: activeId }
+    await saveModelPresets(modelPresets.value)
+  }
+  async function removeVisionPreset(id: string) {
+    const list = modelPresets.value.vision.filter((p) => p.id !== id)
+    if (list.length === 0) list.push(buildDefaultVisionPreset())
+    const activeId = modelPresets.value.activeVisionId === id ? list[0].id : modelPresets.value.activeVisionId
+    modelPresets.value = { ...modelPresets.value, vision: list, activeVisionId: activeId }
+    await saveModelPresets(modelPresets.value)
+  }
+
   async function loadRecents() {
     recentOCRs.value = await getAllOCRResults()
     recentChats.value = await getAllChatSessions()
@@ -78,9 +269,11 @@ export const useAppStore = defineStore('app', () => {
   }
 
   async function createOCRResult(imageBase64: string, text: string, markdown: string) {
+    // 通过 Canvas 重绘剥离 EXIF 数据（GPS 坐标、设备信息等）
+    const strippedBase64 = await stripExifData(imageBase64)
     const result: OCRResult = {
       id: uuidv4(),
-      imageBase64,
+      imageBase64: strippedBase64,
       text,
       markdown,
       createdAt: Date.now()
@@ -101,6 +294,14 @@ export const useAppStore = defineStore('app', () => {
 
   function clearCurrentOCR() {
     currentOCR.value = null
+  }
+
+  async function deleteOCR(id: string) {
+    await deleteOCRResult(id)
+    if (currentOCR.value?.id === id) {
+      currentOCR.value = null
+    }
+    recentOCRs.value = await getAllOCRResults()
   }
 
   async function createChatSession(title: string, ocrResultId?: string) {
@@ -183,11 +384,6 @@ export const useAppStore = defineStore('app', () => {
     streamContent.value = ''
   }
 
-  async function updateModelSettings(settings: Partial<ModelSettings>) {
-    modelSettings.value = { ...modelSettings.value, ...settings }
-    await saveModelSettings(modelSettings.value)
-  }
-
   return {
     currentOCR,
     currentChat,
@@ -197,6 +393,9 @@ export const useAppStore = defineStore('app', () => {
     recentChats,
     favorites,
     modelSettings,
+    modelPresets,
+    activeChatPreset,
+    activeVisionPreset,
     hasCurrentOCR,
     hasCurrentChat,
     isChatModelConfigured,
@@ -205,6 +404,7 @@ export const useAppStore = defineStore('app', () => {
     createOCRResult,
     loadOCR,
     clearCurrentOCR,
+    deleteOCR,
     createChatSession,
     loadChat,
     addMessageToChat,
@@ -215,6 +415,11 @@ export const useAppStore = defineStore('app', () => {
     setStreamContent,
     appendStreamContent,
     clearStreamContent,
-    updateModelSettings
+    setActiveChatPreset,
+    setActiveVisionPreset,
+    upsertChatPreset,
+    upsertVisionPreset,
+    removeChatPreset,
+    removeVisionPreset
   }
 })

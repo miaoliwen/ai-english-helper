@@ -47,6 +47,23 @@ export interface ModelSettings {
   visionApiKey: string
 }
 
+/** 单个模型预设。 */
+export interface ModelPreset {
+  id: string
+  name: string
+  baseUrl: string
+  apiKey: string
+  modelId: string
+}
+
+/** 完整的模型预设集合：对话 + 视觉，各自带激活项。 */
+export interface ModelPresets {
+  chat: ModelPreset[]
+  vision: ModelPreset[]
+  activeChatId: string
+  activeVisionId: string
+}
+
 export interface AppState {
   currentOCR: OCRResult | null
   currentChat: ChatSession | null
