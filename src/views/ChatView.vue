@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useChatActions } from '@/composables/useChatActions'
 import { useToast } from '@/composables/useToast'
@@ -72,6 +72,7 @@ import { ChatHeader, ChatInput, ChatMessages, ChatSidebar, ChatMobileDrawer } fr
 
 const store = useAppStore()
 const route = useRoute()
+const router = useRouter()
 const { showToast } = useToast()
 
 const {
@@ -120,7 +121,12 @@ onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
   store.loadRecents()
   const chatId = route.params.id as string
-  if (chatId) store.loadChat(chatId)
+  if (chatId) {
+    store.loadChat(chatId)
+  } else if (store.currentChat) {
+    // 恢复上次活跃的聊天，更新 URL
+    router.replace(`/chat/${store.currentChat.id}`)
+  }
 })
 
 // Cancel stream when switching chats

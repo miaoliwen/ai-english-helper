@@ -20,6 +20,26 @@ import {
 
 const MODEL_SETTINGS_KEY = 'aieh-model-settings'
 const MODEL_PRESETS_KEY = 'aieh-model-presets'
+const ACTIVE_CHAT_ID_KEY = 'aieh-active-chat-id'
+
+/** 保存当前活跃的聊天会话 ID 到 localStorage */
+function saveActiveChatId(id: string | null) {
+  try {
+    if (id) {
+      localStorage.setItem(ACTIVE_CHAT_ID_KEY, id)
+    } else {
+      localStorage.removeItem(ACTIVE_CHAT_ID_KEY)
+    }
+  } catch { /* ignore */ }
+}
+
+/** 从 localStorage 加载上次活跃的聊天会话 ID */
+function loadActiveChatId(): string | null {
+  try {
+    return localStorage.getItem(ACTIVE_CHAT_ID_KEY)
+  } catch { /* ignore */ }
+  return null
+}
 
 /** 通过 Canvas 重绘图片来剥离 EXIF 元数据（GPS、设备信息等） */
 function stripExifData(dataUrl: string): Promise<string> {
@@ -193,6 +213,24 @@ export const useAppStore = defineStore('app', () => {
     modelPresets.value = presets
   })
 
+  // 恢复上次活跃的聊天会话
+  const savedChatId = loadActiveChatId()
+  if (savedChatId) {
+    getChatSession(savedChatId).then((session) => {
+      if (session) {
+        currentChat.value = session
+        // 加载关联的 OCR 结果
+        if (session.ocrResultId) {
+          getOCRResult(session.ocrResultId).then((ocr) => {
+            if (ocr) {
+              currentOCR.value = ocr
+            }
+          })
+        }
+      }
+    })
+  }
+
   const hasCurrentOCR = computed(() => !!currentOCR.value)
   const hasCurrentChat = computed(() => !!currentChat.value)
   const isChatModelConfigured = computed(() =>
@@ -311,6 +349,7 @@ export const useAppStore = defineStore('app', () => {
     }
     await saveChatSession(session)
     currentChat.value = session
+    saveActiveChatId(session.id)
     recentChats.value = await getAllChatSessions()
     return session
   }
@@ -319,6 +358,14 @@ export const useAppStore = defineStore('app', () => {
     const session = await getChatSession(id)
     if (session) {
       currentChat.value = session
+      saveActiveChatId(session.id)
+      // 加载关联的 OCR 结果
+      if (session.ocrResultId) {
+        const ocr = await getOCRResult(session.ocrResultId)
+        if (ocr) {
+          currentOCR.value = ocr
+        }
+      }
     }
     return session
   }
@@ -340,6 +387,7 @@ export const useAppStore = defineStore('app', () => {
     await deleteChatSession(id)
     if (currentChat.value?.id === id) {
       currentChat.value = null
+      saveActiveChatId(null)
     }
     recentChats.value = await getAllChatSessions()
   }

@@ -9,12 +9,16 @@
             </svg>
           </slot>
         </div>
-        <div class="flex-1 min-w-0 text-neutral-900 dark:text-neutral-100">
-          <MarkdownRenderer v-if="content" reading :content="content" />
-          <div v-else class="flex items-center gap-1.5 py-2">
-            <div class="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"></div>
-            <div class="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce animation-delay-150"></div>
-            <div class="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce animation-delay-300"></div>
+        <div class="flex-1 min-w-0">
+          <div v-if="content" class="inline-block max-w-[88%] sm:max-w-[80%] rounded-[1.25rem] px-4 py-2.5 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-900 dark:text-neutral-100 border border-neutral-200/50 dark:border-neutral-700/50">
+            <MarkdownRenderer reading :content="content" />
+          </div>
+          <div v-else class="inline-block rounded-[1.25rem] px-4 py-2.5 bg-neutral-100 dark:bg-neutral-800/50 border border-neutral-200/50 dark:border-neutral-700/50">
+            <div class="flex items-center gap-1.5">
+              <div class="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"></div>
+              <div class="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce animation-delay-150"></div>
+              <div class="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce animation-delay-300"></div>
+            </div>
           </div>
         </div>
       </div>

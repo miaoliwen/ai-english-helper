@@ -1,6 +1,6 @@
 <template>
   <div v-if="message.role === 'user'" class="flex justify-end">
-    <div class="max-w-[88%] sm:max-w-[80%] rounded-[1.25rem] px-4 py-2.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
+    <div class="max-w-[88%] sm:max-w-[80%] rounded-[1.25rem] px-4 py-2.5 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900">
       <p class="text-[15px] sm:text-base leading-[1.65] whitespace-pre-wrap break-words">{{ message.content }}</p>
     </div>
   </div>
@@ -13,8 +13,10 @@
         </svg>
       </slot>
     </div>
-    <div class="flex-1 min-w-0 text-neutral-900 dark:text-neutral-100">
-      <MarkdownRenderer reading :content="message.content" />
+    <div class="flex-1 min-w-0">
+      <div class="inline-block max-w-[88%] sm:max-w-[80%] rounded-[1.25rem] px-4 py-2.5 bg-neutral-100 dark:bg-neutral-800/50 text-neutral-900 dark:text-neutral-100 border border-neutral-200/50 dark:border-neutral-700/50">
+        <MarkdownRenderer reading :content="message.content" />
+      </div>
       <div class="flex items-center gap-1 mt-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity">
         <button @click="copyContent"
                 class="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 rounded-lg transition-colors touch-target"
