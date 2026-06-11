@@ -1,6 +1,6 @@
 <template>
   <Transition name="scale">
-    <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="close">
+    <div v-if="visible" ref="modalRef" class="fixed inset-0 z-50 flex items-center justify-center p-4" @click.self="close">
       <div class="absolute inset-0 bg-neutral-900/30 dark:bg-black/50 backdrop-blur-sm"></div>
       <div class="relative bg-white dark:bg-neutral-900 rounded-4xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <!-- Header -->
@@ -101,7 +101,15 @@
                   <input v-model="editing.baseUrl" type="text" placeholder="例如：https://api.deepseek.com" inputmode="url" enterkeyhint="next" autocomplete="url" class="input-field text-sm" />
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1.5">API Key</label>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400">API Key</label>
+                    <span v-if="editing.apiKey?.trim()" class="inline-flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                      </svg>
+                      已保存
+                    </span>
+                  </div>
                   <div class="relative">
                     <input v-model="editing.apiKey" :type="showKey ? 'text' : 'password'" placeholder="sk-..." enterkeyhint="done" autocomplete="off" class="input-field text-sm pr-12" />
                     <button @click="showKey = !showKey" type="button" :aria-label="showKey ? '隐藏 API Key' : '显示 API Key'" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 touch-target">
@@ -111,6 +119,9 @@
                       </svg>
                     </button>
                   </div>
+                  <p class="mt-1.5 text-[11px] text-neutral-400 dark:text-neutral-500 leading-relaxed">
+                    密钥经 AES 加密后保存在本设备浏览器中，不会上传到服务器。填写后自动保存，刷新页面仍有效。
+                  </p>
                 </div>
 
                 <div class="pt-2 flex flex-col gap-2">
@@ -140,7 +151,14 @@
         </div>
 
         <!-- Footer -->
-        <div class="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-end gap-3 shrink-0">
+        <div class="px-6 py-4 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-3 shrink-0">
+          <p class="text-xs transition-colors"
+             :class="saveStatus === 'saved' ? 'text-green-600 dark:text-green-400'
+               : saveStatus === 'error' ? 'text-red-500 dark:text-red-400'
+               : saveStatus === 'saving' ? 'text-neutral-400'
+               : 'text-transparent'">
+            {{ saveStatusText }}
+          </p>
           <button @click="close" class="btn-ghost text-sm touch-target">关闭</button>
         </div>
       </div>
@@ -149,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import type { ModelPreset } from '@/types'
 import { v4 as uuidv4 } from '@/utils/uuid'
@@ -161,6 +179,56 @@ const emit = defineEmits<{ (e: 'update:visible', value: boolean): void }>()
 
 // 锁住 body 滚动，避免移动端背景穿透
 useScrollLock(toRef(props, 'visible'))
+
+const modalRef = ref<HTMLDivElement | null>(null)
+const lastFocusedElement = ref<HTMLElement | null>(null)
+
+// Focus trap + Escape 关闭
+function handleModalKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    close()
+    return
+  }
+  if (e.key !== 'Tab' || !modalRef.value) return
+
+  const focusable = modalRef.value.querySelectorAll<HTMLElement>(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
+
+onMounted(() => {
+  lastFocusedElement.value = document.activeElement as HTMLElement
+})
+
+watch(() => props.visible, (val) => {
+  if (val) {
+    document.addEventListener('keydown', handleModalKeydown)
+    // 模态框打开后聚焦第一个可交互元素
+    nextTick(() => {
+      const focusable = modalRef.value?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      focusable?.[0]?.focus()
+    })
+  } else {
+    document.removeEventListener('keydown', handleModalKeydown)
+    lastFocusedElement.value?.focus()
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', handleModalKeydown)
+})
 
 const store = useAppStore()
 type Tab = 'chat' | 'vision'
@@ -176,6 +244,19 @@ const mobileStep = ref<'list' | 'editor'>('list')
 const showKey = ref(false)
 const testing = ref(false)
 const diagnostic = ref<DiagnosticResult | null>(null)
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
+const saveStatus = ref<SaveStatus>('idle')
+let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let saveIndicatorTimer: ReturnType<typeof setTimeout> | null = null
+
+const saveStatusText = computed(() => {
+  switch (saveStatus.value) {
+    case 'saving': return '正在保存...'
+    case 'saved': return '配置已保存到本设备'
+    case 'error': return '保存失败，请重试'
+    default: return ''
+  }
+})
 
 const currentList = computed<ModelPreset[]>(() =>
   activeTab.value === 'chat' ? store.modelPresets.chat : store.modelPresets.vision
@@ -237,15 +318,31 @@ async function setActive() {
   diagnostic.value = { success: true, message: '已设为当前使用', details: `预设「${editing.value.name}」已激活` }
 }
 
-// 编辑实时同步：用户改表单字段就 upsert
-watch(editing, async (val) => {
+// 编辑实时同步：防抖后加密保存到 localStorage
+watch(editing, (val) => {
   if (!val) return
-  if (activeTab.value === 'chat') {
-    await store.upsertChatPreset(val)
-  } else {
-    await store.upsertVisionPreset(val)
-  }
+  saveStatus.value = 'saving'
+  if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
+  saveDebounceTimer = setTimeout(async () => {
+    try {
+      if (activeTab.value === 'chat') {
+        await store.upsertChatPreset(val)
+      } else {
+        await store.upsertVisionPreset(val)
+      }
+      saveStatus.value = 'saved'
+      if (saveIndicatorTimer) clearTimeout(saveIndicatorTimer)
+      saveIndicatorTimer = setTimeout(() => { saveStatus.value = 'idle' }, 2500)
+    } catch {
+      saveStatus.value = 'error'
+    }
+  }, 400)
 }, { deep: true })
+
+onBeforeUnmount(() => {
+  if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
+  if (saveIndicatorTimer) clearTimeout(saveIndicatorTimer)
+})
 
 async function testConnection() {
   if (!editing.value) return

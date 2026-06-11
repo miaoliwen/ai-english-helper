@@ -57,7 +57,7 @@ export async function streamChatCompletion(
   onChunk: (content: string) => void,
   onDone?: () => void,
   onError?: (error: Error) => void,
-  userSettings?: ApiModelSettings
+  userSettings?: ApiModelSettings & { signal?: AbortSignal }
 ): Promise<void> {
   try {
     const cfg = resolveModelConfig(userSettings, '对话模型')
@@ -74,7 +74,8 @@ export async function streamChatCompletion(
         stream: true,
         temperature: 0.7,
         max_tokens: 4096
-      })
+      }),
+      signal: userSettings?.signal
     })
 
     if (!response.ok) {

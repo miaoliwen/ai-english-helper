@@ -76,9 +76,6 @@ function getLegacyKey(): Promise<CryptoKey> {
 }
 
 function isBase64(value: string): boolean {
-  // 至少 16 字符：避免极短字符串（如 "abc=="、"hello"）误入解密路径浪费 PBKDF2
-  // 严格 base64 字符集 + 长度 4 倍数（base64 padding 规则）
-  if (value.length < 16 || value.length % 4 !== 0) return false
   return /^[A-Za-z0-9+/]+=*$/.test(value)
 }
 
@@ -113,18 +110,16 @@ export async function encryptData(data: string): Promise<string> {
 export async function decryptData(encryptedData: string): Promise<string> {
   if (!encryptedData) return ''
 
-  // v1 加密数据：尝试新密钥，失败回退旧密钥（迁移场景）
   if (encryptedData.startsWith(ENCRYPTION_PREFIX)) {
-    const payload = encryptedData.slice(ENCRYPTION_PREFIX.length)
+    // 优先尝试新密钥，失败则回退旧密钥（自动迁移）
     try {
-      return await decryptPayload(payload, false)
+      return await decryptPayload(encryptedData.slice(ENCRYPTION_PREFIX.length), false)
     } catch {
-      // 旧密钥兜底，失败时向上抛错（由调用方决定是否回退到明文）
-      return await decryptPayload(payload, true)
+      return await decryptPayload(encryptedData.slice(ENCRYPTION_PREFIX.length), true)
     }
   }
 
-  // 兼容旧版本：旧数据是无前缀 base64；更旧的可能是明文。
+  // 兼容旧版本：旧数据是无前缀 base64；更旧的数据可能是明文。
   if (isBase64(encryptedData)) {
     try {
       return await decryptPayload(encryptedData, false)
@@ -132,7 +127,6 @@ export async function decryptData(encryptedData: string): Promise<string> {
       try {
         return await decryptPayload(encryptedData, true)
       } catch {
-        // 旧版本明文 fallback：完全无法解密时回退到原文。
         return encryptedData
       }
     }

@@ -162,6 +162,7 @@ export const useAppStore = defineStore('app', () => {
   const recentOCRs = ref<OCRResult[]>([])
   const recentChats = ref<ChatSession[]>([])
   const favorites = ref<FavoriteItem[]>([])
+  const settingsModalOpen = ref(false)
 
   // 模型预设集合（多套）
   const modelPresets = ref<ModelPresets>({
@@ -188,21 +189,9 @@ export const useAppStore = defineStore('app', () => {
   })
 
   // 异步加载加密的配置（迁移旧版 ModelSettings）
-  // 加 catch：解密失败时退回到空预设，UI 仍可使用（isChatModelConfigured=false → 引导用户去设置）
-  loadModelPresets()
-    .then((presets) => {
-      modelPresets.value = presets
-    })
-    .catch((error) => {
-      console.error('加载模型预设失败：', error)
-      // 提供默认空预设，至少让 UI 正常工作
-      modelPresets.value = {
-        chat: [buildDefaultChatPreset()],
-        vision: [buildDefaultVisionPreset()],
-        activeChatId: modelPresets.value.chat[0]?.id || '',
-        activeVisionId: modelPresets.value.vision[0]?.id || ''
-      }
-    })
+  loadModelPresets().then((presets) => {
+    modelPresets.value = presets
+  })
 
   const hasCurrentOCR = computed(() => !!currentOCR.value)
   const hasCurrentChat = computed(() => !!currentChat.value)
@@ -212,6 +201,13 @@ export const useAppStore = defineStore('app', () => {
   const isVisionModelConfigured = computed(() =>
     !!(modelSettings.value.visionBaseUrl?.trim() && modelSettings.value.visionApiKey?.trim() && modelSettings.value.visionModel?.trim())
   )
+
+  // 兼容性：任意模型已配置即视为已配置
+  const isModelConfigured = computed(() => isChatModelConfigured.value || isVisionModelConfigured.value)
+
+  function openSettings() {
+    settingsModalOpen.value = true
+  }
 
   const activeChatPreset = computed(() =>
     modelPresets.value.chat.find((p) => p.id === modelPresets.value.activeChatId) || modelPresets.value.chat[0] || null
@@ -348,6 +344,19 @@ export const useAppStore = defineStore('app', () => {
     recentChats.value = await getAllChatSessions()
   }
 
+  async function removeLastMessage(sessionId: string) {
+    const session = await getChatSession(sessionId)
+    if (session && session.messages.length > 0) {
+      session.messages.pop()
+      session.updatedAt = Date.now()
+      await saveChatSession(session)
+      if (currentChat.value?.id === sessionId) {
+        currentChat.value = session
+      }
+      recentChats.value = await getAllChatSessions()
+    }
+  }
+
   async function addToFavorites(item: Omit<FavoriteItem, 'id' | 'createdAt'>) {
     const favorite: FavoriteItem = {
       ...item,
@@ -400,6 +409,9 @@ export const useAppStore = defineStore('app', () => {
     hasCurrentChat,
     isChatModelConfigured,
     isVisionModelConfigured,
+    isModelConfigured,
+    settingsModalOpen,
+    openSettings,
     loadRecents,
     createOCRResult,
     loadOCR,
@@ -409,6 +421,7 @@ export const useAppStore = defineStore('app', () => {
     loadChat,
     addMessageToChat,
     deleteChat,
+    removeLastMessage,
     addToFavorites,
     removeFavorite,
     searchFavoriteItems,

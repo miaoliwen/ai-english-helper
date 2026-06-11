@@ -7,6 +7,13 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Firefox 滚动条颜色 */
+    scrollbar-color: #d1d5db transparent;
+    scrollbar-width: thin;
+  }
+
+  html.dark {
+    scrollbar-color: #4b5563 transparent;
   }
 
   body {
@@ -14,11 +21,55 @@
     background-color: #f9fafb;
     color: #1f2937;
     line-height: 1.6;
+    min-height: 100vh; /* fallback for old browsers */
+    min-height: 100dvh;
   }
 
   html.dark body {
     background-color: #030712;
     color: #f3f4f6;
+  }
+
+  /* 全局焦点可见样式：键盘导航时显示清晰焦点环 */
+  :focus-visible {
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Skip to content link for keyboard users */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    padding: 0.75rem 1.5rem;
+    background: #111827;
+    color: #fff;
+    font-weight: 500;
+    border-radius: 0.75rem;
+    transition: top 0.2s ease;
+  }
+
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  /* Firefox text-wrap balance fallback */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  @supports not (text-wrap: balance) {
+    .text-balance {
+      /* Firefox < 121 fallback: use hyphenation as partial improvement */
+      hyphens: auto;
+    }
   }
 
   ::selection {
@@ -44,9 +95,9 @@
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-accent-600 text-white font-medium rounded-2xl
-           transition-all duration-300 hover:bg-accent-700 hover:shadow-glow
-           active:scale-[0.98] active:-translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 font-medium rounded-2xl
+           transition-all duration-300 hover:bg-neutral-800 dark:hover:bg-white
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
@@ -112,7 +163,7 @@
   }
 
   .section-label {
-    @apply text-xs font-semibold tracking-widest uppercase text-accent-600 mb-3;
+    @apply text-[11px] font-semibold tracking-[0.2em] uppercase text-neutral-400 dark:text-neutral-500 mb-3 font-mono;
   }
 
   .section-title {
@@ -132,15 +183,77 @@
   }
 
   .liquid-glass {
-    @apply bg-white/60 backdrop-blur-2xl;
-    border: 1px solid rgba(255,255,255,0.3);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 32px rgba(0,0,0,0.04);
+    @apply bg-white/70 backdrop-blur-2xl;
+    border: 1px solid rgba(255,255,255,0.45);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 32px -8px rgba(0,0,0,0.06);
   }
 
   html.dark .liquid-glass {
-    @apply bg-neutral-900/50;
+    @apply bg-neutral-900/55;
     border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 32px rgba(0,0,0,0.25);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px -8px rgba(0,0,0,0.35);
+  }
+
+  .page-shell {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .page-hero-title {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.05] text-neutral-900 dark:text-neutral-100;
+  }
+
+  .page-lead {
+    @apply text-base text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-[65ch];
+  }
+
+  .surface-panel {
+    @apply bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-200/70 dark:border-neutral-800 shadow-diffuse;
+  }
+
+  .list-panel {
+    @apply bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-200/70 dark:border-neutral-800 shadow-diffuse overflow-hidden divide-y divide-neutral-100 dark:divide-neutral-800;
+  }
+
+  .bento-tile {
+    @apply bg-white dark:bg-neutral-900 rounded-[2rem] border border-neutral-200/70 dark:border-neutral-800 shadow-diffuse p-5 sm:p-6 transition-transform duration-300;
+  }
+
+  .bento-tile:hover {
+    transform: translateY(-2px);
+  }
+
+  .pill-tab {
+    @apply px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
+           border border-transparent;
+  }
+
+  .pill-tab-active {
+    @apply bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900;
+  }
+
+  .pill-tab-inactive {
+    @apply bg-transparent text-neutral-600 dark:text-neutral-400
+           border-neutral-200 dark:border-neutral-700
+           hover:bg-neutral-50 dark:hover:bg-neutral-800/60;
+  }
+
+  .upload-zone {
+    @apply relative rounded-[2rem] border-2 border-dashed cursor-pointer
+           transition-all duration-300;
+  }
+
+  .upload-zone-idle {
+    @apply border-neutral-200 dark:border-neutral-700
+           hover:border-neutral-300 dark:hover:border-neutral-600
+           hover:bg-neutral-50/80 dark:hover:bg-neutral-800/30;
+  }
+
+  .upload-zone-active {
+    @apply border-accent-500/60 bg-accent-50/40 dark:bg-accent-900/10;
+  }
+
+  .alert-banner-warn {
+    @apply rounded-2xl border border-amber-200/80 dark:border-amber-800/50 bg-amber-50/60 dark:bg-amber-900/10 px-4 py-3 flex items-start gap-3;
   }
 }
 
@@ -168,6 +281,40 @@
   .pb-nav { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
   /* 全局：触控元素最小 44×44（Apple HIG / Material） */
   .touch-target { min-width: 2.75rem; min-height: 2.75rem; }
+
+  /* ChatGPT 风格：底部输入区安全区 */
+  .pb-composer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .stagger-item {
+    animation: fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 全局胶片颗粒（固定层，不影响滚动性能） */
+.app-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+html.dark .app-grain {
+  opacity: 0.05;
 }
 
 /* Home: aurora glow background */
@@ -229,6 +376,99 @@ html.dark .floating-letter {
 @media (max-width: 640px) {
   .floating-letter { display: none; }
   .aurora-blob { filter: blur(40px); }
+}
+
+/* Chat 阅读模式：移动端长文排版优化（类 ChatGPT） */
+.markdown-reading {
+  @apply text-[15px] sm:text-base leading-[1.75] tracking-normal;
+  -webkit-text-size-adjust: 100%;
+}
+
+.markdown-reading h1 {
+  @apply text-xl sm:text-2xl mt-6 mb-3;
+}
+
+.markdown-reading h2 {
+  @apply text-lg sm:text-xl mt-5 mb-2.5;
+}
+
+.markdown-reading h3 {
+  @apply text-base sm:text-lg mt-4 mb-2;
+}
+
+.markdown-reading p {
+  @apply text-neutral-800 dark:text-neutral-200 mb-3 last:mb-0;
+}
+
+.markdown-reading ul,
+.markdown-reading ol {
+  @apply list-outside pl-5 sm:pl-6 space-y-2 mb-3 text-neutral-800 dark:text-neutral-200;
+}
+
+.markdown-reading li {
+  @apply leading-[1.75];
+}
+
+.markdown-reading li > p {
+  @apply mb-1;
+}
+
+.markdown-reading pre {
+  @apply p-3 sm:p-4 rounded-xl mb-3 text-[13px] sm:text-sm;
+}
+
+.markdown-reading code {
+  @apply text-[13px] sm:text-sm;
+}
+
+.markdown-reading blockquote {
+  @apply mb-3 pl-4;
+}
+
+.markdown-reading table {
+  @apply text-[13px] sm:text-sm;
+}
+
+.markdown-reading th,
+.markdown-reading td {
+  @apply px-3 py-2;
+}
+
+/* ChatGPT 风格输入框 */
+.chat-composer {
+  @apply flex items-end gap-1.5 p-1.5 pl-4
+         bg-white dark:bg-neutral-900
+         border border-neutral-200 dark:border-neutral-700
+         rounded-[1.75rem] shadow-sm;
+}
+
+.chat-composer:focus-within {
+  @apply border-neutral-300 dark:border-neutral-600 ring-1 ring-neutral-200/80 dark:ring-neutral-700/80;
+}
+
+.chat-composer textarea {
+  @apply flex-1 min-h-[44px] max-h-[400px] py-2.5 pr-1
+         bg-transparent border-0 resize-none
+         text-base leading-relaxed text-neutral-900 dark:text-neutral-100
+         placeholder-neutral-400 dark:placeholder-neutral-500
+         focus:outline-none focus:ring-0;
+}
+
+.chat-composer-send {
+  @apply shrink-0 w-9 h-9 flex items-center justify-center
+         rounded-full bg-neutral-900 dark:bg-neutral-100
+         text-white dark:text-neutral-900
+         transition-all disabled:opacity-30 disabled:cursor-not-allowed
+         active:scale-95;
+}
+
+.chat-composer-send:not(:disabled):hover {
+  @apply bg-neutral-800 dark:bg-white;
+}
+
+/* 消息行：助手回复区轻微底色分隔 */
+.chat-message-assistant {
+  @apply bg-neutral-50/80 dark:bg-neutral-900/40;
 }
 
 /* Markdown Content Styles */
@@ -364,15 +604,21 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   @apply bg-neutral-500;
 }
 
-/* Vue Transitions */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+/* Vue Transitions — 使用 animation 而非 transition，
+   animationend 事件比 transitionend 更可靠，避免 mode="out-in" 卡住 */
+.fade-enter-active {
+  animation: fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.fade-leave-active {
+  animation: fade-out 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .slide-up-enter-active,
@@ -395,4 +641,124 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 .scale-leave-to {
   opacity: 0;
   transform: scale(0.96);
+}
+
+/* 侧栏从左滑入（ChatGPT 风格） */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-left-enter-active > .slide-left-panel,
+.slide-left-leave-active > .slide-left-panel {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-left-enter-from,
+.slide-left-leave-to {
+  opacity: 0;
+}
+
+.slide-left-enter-from > .slide-left-panel,
+.slide-left-leave-to > .slide-left-panel {
+  transform: translateX(-100%);
+}
+
+/* ============================================
+   桌面浏览器适配优化
+   ============================================ */
+
+/* Firefox backdrop-filter fallback */
+@supports not (backdrop-filter: blur(12px)) {
+  .liquid-glass,
+  .glass-panel {
+    background-color: rgba(255, 255, 255, 0.95);
+  }
+  html.dark .liquid-glass,
+  html.dark .glass-panel {
+    background-color: rgba(17, 24, 39, 0.95);
+  }
+}
+
+/* 桌面端 hover 优化：仅在支持 hover 的设备上启用 hover 效果 */
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-ghost:hover {
+    transform: translateY(-1px);
+  }
+
+  .card-surface-hover:hover {
+    transform: translateY(-2px);
+  }
+
+  .bento-tile:hover {
+    transform: translateY(-2px);
+  }
+
+  /* 桌面端触控目标可略微缩小 */
+  .touch-target {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+  }
+}
+
+/* 大屏幕优化：2560x1440 及以上 */
+@media (min-width: 1920px) {
+  .page-shell {
+    max-width: 90rem; /* 1440px */
+  }
+}
+
+@media (min-width: 2560px) {
+  .page-shell {
+    max-width: 100rem; /* 1600px */
+  }
+}
+
+/* 小屏幕桌面优化：1366x768 */
+@media (max-width: 1440px) and (min-width: 1024px) {
+  .page-hero-title {
+    font-size: 2.5rem;
+  }
+}
+
+/* content-visibility 性能优化：长列表区域 */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
+
+/* 减少动画：尊重用户偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 打印样式优化 */
+@media print {
+  .app-grain,
+  .aurora-blob,
+  .floating-letter,
+  nav,
+  .chat-composer,
+  .pb-composer {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .markdown-content pre {
+    background: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+  }
 }

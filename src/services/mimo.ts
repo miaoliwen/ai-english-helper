@@ -1,4 +1,4 @@
-import { readApiError, resolveModelConfig, limitedFetch, validateVisionImageSize, type ApiModelSettings } from './config'
+import { readApiError, resolveModelConfig, limitedFetch, type ApiModelSettings } from './config'
 import { OCR_VISION_PROMPT } from './prompts'
 
 export interface MimoOCRResponse {
@@ -15,7 +15,6 @@ export async function recognizeImage(
   imageBase64: string,
   userSettings?: ApiModelSettings
 ): Promise<MimoOCRResponse> {
-  validateVisionImageSize(imageBase64)
   const cfg = resolveModelConfig(userSettings, '视觉模型')
 
   const response = await limitedFetch(cfg.endpoint, {

@@ -1,4 +1,4 @@
-import { watch, type Ref } from 'vue'
+import { watch, onBeforeUnmount, type Ref } from 'vue'
 
 /**
  * 当某个 ref 变为 true 时锁住 body 滚动（解决移动端
@@ -54,4 +54,10 @@ export function useScrollLock(active: Ref<boolean>) {
     if (val) lock()
     else unlock()
   }, { immediate: true })
+
+  // 组件卸载时释放滚动锁，避免切换路由后 body 仍处于
+  // overflow:hidden + position:fixed 导致页面卡死。
+  onBeforeUnmount(() => {
+    if (lockedCount > 0) unlock()
+  })
 }

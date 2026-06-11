@@ -1,10 +1,11 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
-    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+  <a href="#favorites-main" class="skip-link">跳转到主内容</a>
+  <div class="page-shell py-8 pb-24" id="favorites-main">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
       <div>
-        <div class="section-label">Library</div>
-        <h2 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">收藏图书馆</h2>
-          <p class="text-neutral-500 dark:text-neutral-400 mt-2">管理你的学习收藏，支持离线查看与快速检索</p>
+        <p class="section-label">Library</p>
+        <h2 class="text-3xl md:text-4xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tighter">收藏图书馆</h2>
+        <p class="page-lead mt-3">离线保存的识别与对话，支持全文检索</p>
       </div>
       <div class="relative">
         <input v-model="searchQuery" @input="handleSearch" type="text" placeholder="搜索收藏..."
@@ -17,16 +18,16 @@
     </div>
 
     <!-- Filter Tabs -->
-    <div class="flex items-center gap-2 mb-8">
+    <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-1 -mx-1 px-1">
       <button v-for="tab in tabs" :key="tab.value" @click="activeTab = tab.value"
-              class="px-5 py-3 rounded-2xl text-sm font-medium transition-all duration-300"
-              :class="activeTab === tab.value ? 'bg-accent-600 text-white shadow-glow' : 'bg-white text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-700'">
+              class="pill-tab shrink-0"
+              :class="activeTab === tab.value ? 'pill-tab-active' : 'pill-tab-inactive'">
         {{ tab.label }}
       </button>
     </div>
 
     <!-- Empty State -->
-    <div v-if="filteredItems.length === 0" class="card-surface p-20 text-center">
+    <div v-if="filteredItems.length === 0" class="surface-panel p-16 sm:p-20 text-center">
       <div class="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mx-auto mb-5">
         <svg class="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0111.186 0z"/>
@@ -38,9 +39,10 @@
     </div>
 
     <!-- Grid -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="item in filteredItems" :key="item.id"
-           class="card-surface-hover p-6 group cursor-pointer"
+    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+      <div v-for="(item, index) in filteredItems" :key="item.id"
+           :style="{ '--i': index }"
+           class="bento-tile group cursor-pointer stagger-item"
            @click="viewItem(item)">
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center gap-2">
@@ -67,9 +69,9 @@
         </div>
 
         <h3 class="font-semibold text-neutral-900 dark:text-neutral-100 mb-2 line-clamp-1">{{ item.title }}</h3>
-        <div class="bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl p-3.5 mb-4 max-h-28 overflow-y-auto">
-          <p class="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-3">{{ item.content.slice(0, 180) }}...</p>
-        </div>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-3 leading-relaxed mb-4 border-l-2 border-neutral-200 dark:border-neutral-700 pl-3">
+          {{ item.content.slice(0, 180) }}...
+        </p>
 
         <div class="flex items-center justify-between">
           <span class="text-xs text-neutral-400 font-mono">{{ formatDate(item.createdAt) }}</span>
@@ -107,7 +109,7 @@
             </div>
           </div>
           <div class="flex-1 overflow-y-auto p-5 sm:p-6 pb-nav">
-            <MarkdownRenderer :content="selectedItem.content" />
+            <MarkdownRenderer reading :content="selectedItem.content" />
           </div>
         </div>
       </div>
@@ -131,6 +133,16 @@ const activeTab = ref<'all' | 'ocr' | 'chat'>('all')
 const selectedItem = ref<FavoriteItem | null>(null)
 
 useScrollLock(computed(() => selectedItem.value !== null))
+
+// 键盘导航：Escape 关闭详情弹窗
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && selectedItem.value) {
+    selectedItem.value = null
+  }
+}
+
+onMounted(() => { document.addEventListener('keydown', handleKeydown) })
+onBeforeUnmount(() => { document.removeEventListener('keydown', handleKeydown) })
 
 const tabs = [
   { label: '全部', value: 'all' as const },

@@ -1,74 +1,104 @@
 <template>
-  <div class="relative isolate">
-    <!-- Aurora background -->
-    <div aria-hidden="true" class="absolute inset-0 -z-10 overflow-hidden">
-      <div class="aurora-blob aurora-a bg-accent-300/40 dark:bg-accent-500/20 w-[520px] h-[520px] -top-32 -left-24" />
-      <div class="aurora-blob aurora-b bg-accent-200/40 dark:bg-accent-700/15 w-[480px] h-[480px] top-20 right-[-160px]" />
-      <div class="aurora-blob aurora-c bg-accent-400/30 dark:bg-accent-400/10 w-[600px] h-[600px] top-[60%] left-[20%]" />
+  <a href="#main-content" class="skip-link">跳转到主内容</a>
+  <div class="relative isolate" id="main-content">
+    <div aria-hidden="true" class="absolute inset-0 -z-10 overflow-hidden hidden md:block">
+      <div class="aurora-blob aurora-a bg-accent-300/30 dark:bg-accent-500/15 w-[520px] h-[520px] -top-32 -left-24" />
+      <div class="aurora-blob aurora-b bg-accent-200/30 dark:bg-accent-700/10 w-[480px] h-[480px] top-20 right-[-160px]" />
     </div>
 
-    <!-- Floating letters -->
-    <div aria-hidden="true" class="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-      <span
-        v-for="(l, i) in letters"
-        :key="i"
-        class="floating-letter"
-        :style="l.style"
-      >{{ l.text }}</span>
-    </div>
+    <div class="page-shell pb-24">
+      <!-- Hero：左文右图 Bento（非居中） -->
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center pt-12 md:pt-20 pb-16 md:pb-20">
+        <div class="order-2 lg:order-1">
+          <h1 class="page-hero-title text-center">
+            英语题目<br />一拍即解
+          </h1>
+          <div v-if="!store.isModelConfigured && !warnDismissed" class="alert-banner-warn mt-6 relative">
+            <button
+              @click="warnDismissed = true"
+              class="absolute top-2 right-2 p-1 rounded-md text-amber-700/60 dark:text-amber-300/60 hover:text-amber-900 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+              aria-label="关闭提示"
+              title="关闭"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+            <svg class="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+            </svg>
+            <div class="flex-1 min-w-0 pr-5">
+              <p class="text-sm font-medium text-amber-900 dark:text-amber-200">尚未配置 API Key</p>
+              <p class="mt-1 text-xs text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
+                填写对话与视觉模型的地址和密钥后即可使用。密钥加密保存在本设备。
+              </p>
+              <button @click="store.openSettings()" class="mt-3 text-xs font-semibold text-amber-900 dark:text-amber-200 underline underline-offset-2">
+                打开设置
+              </button>
+            </div>
+          </div>
 
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-      <!-- Hero -->
-      <section class="pt-20 pb-14 text-center">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
-          AI 英语解题助手
-        </h1>
-        <p class="mt-3 text-neutral-500 dark:text-neutral-400">
-          上传题目图片，AI 自动识别与解析。本地存储，隐私安全。
-        </p>
-        <div class="mt-7 flex items-center justify-center gap-3">
-          <router-link to="/upload" class="btn-primary">开始识别</router-link>
-          <router-link to="/chat" class="btn-ghost">直接提问</router-link>
+          <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <router-link to="/upload" class="btn-primary">开始识别</router-link>
+            <router-link to="/chat" class="btn-secondary">直接提问</router-link>
+          </div>
         </div>
+
+
       </section>
 
-      <!-- Recent -->
-      <section>
-        <div class="flex items-end justify-between mb-4">
-          <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">最近记录</h2>
+      <!-- 最近记录：列表分组，减少卡片嵌套 -->
+      <section class="border-t border-neutral-200/80 dark:border-neutral-800 pt-10">
+        <div class="flex items-end justify-between mb-5">
+          <div>
+            <p class="section-label">Recent</p>
+            <h2 class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">最近记录</h2>
+          </div>
           <router-link
             v-if="recentItems.length > 0"
             to="/favorites"
-            class="text-sm text-accent-600 hover:text-accent-700 px-2 py-1 -mr-2 rounded-lg"
+            class="text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
           >查看全部</router-link>
         </div>
 
-        <div v-if="recentItems.length === 0" class="card-surface p-10 text-center text-neutral-500 dark:text-neutral-400">
-          暂无记录
+        <div v-if="recentItems.length === 0" class="surface-panel p-12 sm:p-16 text-center">
+          <div class="w-12 h-12 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+            </svg>
+          </div>
+          <p class="text-neutral-600 dark:text-neutral-400">还没有识别或对话记录</p>
+          <router-link to="/upload" class="inline-block mt-5 text-sm font-medium text-accent-700 dark:text-accent-400 hover:underline">
+            上传第一道题目
+          </router-link>
         </div>
 
-        <ul v-else class="card-surface divide-y divide-neutral-100 dark:divide-neutral-800">
+        <ul v-else class="list-panel">
           <li
-            v-for="item in recentItems"
+            v-for="(item, index) in recentItems"
             :key="item.id"
+            :style="{ '--i': index }"
             @click="navigateToItem(item)"
-            class="group flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
+            class="stagger-item group flex items-center gap-4 px-4 sm:px-5 py-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition-colors"
           >
             <span
-              class="shrink-0 w-1.5 h-1.5 rounded-full"
-              :class="item.type === 'ocr' ? 'bg-accent-500' : 'bg-neutral-400'"
-            />
-            <p class="flex-1 min-w-0 truncate text-sm text-neutral-800 dark:text-neutral-200">
+              class="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-[10px] font-mono font-semibold"
+              :class="item.type === 'ocr'
+                ? 'bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400'
+                : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500'"
+            >
+              {{ item.type === 'ocr' ? 'OCR' : 'AI' }}
+            </span>
+            <p class="flex-1 min-w-0 text-sm text-neutral-800 dark:text-neutral-200 line-clamp-1">
               {{ item.preview }}
             </p>
-            <span class="shrink-0 text-xs text-neutral-400 font-mono">
+            <span class="shrink-0 text-xs text-neutral-400 font-mono tabular-nums hidden sm:block">
               {{ formatDate(item.createdAt) }}
             </span>
             <button
               @click.stop="removeItem(item)"
-              :title="'删除该记录'"
               aria-label="删除记录"
-              class="shrink-0 p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md opacity-70 sm:opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all touch-target"
+              class="shrink-0 p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-all touch-target"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -88,49 +118,10 @@ import { useAppStore } from '@/stores/app'
 
 const store = useAppStore()
 const router = useRouter()
-
-// 飘动的英文字母 / 单词。固定池子避免 SSR 漂移
-const LETTER_POOL = [
-  'A', 'B', 'C', 'D', 'E', 'F',
-  'ABC', 'READ', 'LEARN', 'GRAMMAR', 'VERB', 'NOUN',
-  'λ', '∑', 'π', '∞', 'Ω', 'α'
-]
-const LETTER_COUNT = 14
-
-type FloatingLetter = { text: string; style: Record<string, string> }
-
-const letters = ref<FloatingLetter[]>([])
-
-function rand(min: number, max: number) {
-  return Math.random() * (max - min) + min
-}
-
-function buildLetters() {
-  const arr: FloatingLetter[] = []
-  for (let i = 0; i < LETTER_COUNT; i++) {
-    const text = LETTER_POOL[Math.floor(Math.random() * LETTER_POOL.length)]
-    const size = rand(20, 56) // px
-    const left = rand(2, 96) // vw
-    const duration = rand(18, 32) // s
-    const delay = rand(0, 24) // s —— 错开起点
-    const drift = rand(-120, 120) // px 横向漂移
-    arr.push({
-      text,
-      style: {
-        left: `${left}vw`,
-        fontSize: `${size}px`,
-        animationDuration: `${duration}s`,
-        animationDelay: `-${delay}s`,
-        '--drift': `${drift}px`
-      } as Record<string, string>
-    })
-  }
-  return arr
-}
+const warnDismissed = ref(false)
 
 onMounted(() => {
   store.loadRecents()
-  letters.value = buildLetters()
 })
 
 type RecentItem = {

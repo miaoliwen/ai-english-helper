@@ -36,14 +36,14 @@ function releaseSlot() {
   }
 }
 
-/** 防抖包装器。
- *  关键：每一轮都创建独立的 resolve/reject token，不共用变量；
- *  旧 Promise 在新一轮被覆盖前 resolve 出去，避免永久挂起（race fix）。 */
+/** 防抖包装器 */
 export function debounce<T extends (...args: any[]) => any>(
   fn: T,
   delayMs: number
 ): (...args: Parameters<T>) => Promise<ReturnType<T>> {
   let timer: ReturnType<typeof setTimeout> | null = null
+  let pendingResolve: ((value: any) => void) | null = null
+  let pendingReject: ((reason?: any) => void) | null = null
   let latestArgs: Parameters<T> | null = null
 
   return function (this: any, ...args: Parameters<T>): Promise<ReturnType<T>> {
@@ -51,13 +51,18 @@ export function debounce<T extends (...args: any[]) => any>(
     if (timer) clearTimeout(timer)
 
     return new Promise((resolve, reject) => {
+      pendingResolve = resolve
+      pendingReject = reject
       timer = setTimeout(async () => {
-        timer = null
         try {
           const result = await fn.apply(this, latestArgs!)
-          resolve(result)
+          pendingResolve?.(result)
         } catch (err) {
-          reject(err)
+          pendingReject?.(err)
+        } finally {
+          timer = null
+          pendingResolve = null
+          pendingReject = null
         }
       }, delayMs)
     })
@@ -80,29 +85,11 @@ export async function limitedFetch(
 /** 单次请求消息列表总长度限制（字符数） */
 const MAX_MESSAGES_TOTAL_LENGTH = 100_000
 
-/** 视觉模型：图片 base64 单独上限（字符数）。普通 4MB 图片 base64 约 5.5M 字符，
- *  视觉模型通常 5–10MB 输入上限，按 5.5M 设为红线，给 prompt 留余量。 */
-const MAX_VISION_IMAGE_LENGTH = 5_500_000
-
 export function validateMessagesLength(messages: Array<{ content: string }>): void {
   const totalLength = messages.reduce((sum, m) => sum + m.content.length, 0)
   if (totalLength > MAX_MESSAGES_TOTAL_LENGTH) {
     throw new Error(`消息总长度（${totalLength} 字符）超出限制，请缩短对话历史后重试`)
   }
-}
-
-/** 视觉请求专用：仅校验图片 user 段长度，避免和 chat 路径混用同一上限。 */
-export function validateVisionImageSize(imageBase64: string): void {
-  if (imageBase64.length > MAX_VISION_IMAGE_LENGTH) {
-    const sizeMB = (imageBase64.length * 0.75 / 1024 / 1024).toFixed(2)
-    throw new Error(`图片过大（约 ${sizeMB} MB），请压缩到 5 MB 以下再识别`)
-  }
-}
-
-/** 回环地址（开发自建代理常见）。仅这些 host 允许 HTTP 出口。 */
-function isLoopbackHost(hostname: string): boolean {
-  const h = hostname.toLowerCase()
-  return h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '[::1]'
 }
 
 export function normalizeBaseUrl(rawUrl: string): string {
@@ -116,11 +103,10 @@ export function normalizeBaseUrl(rawUrl: string): string {
     throw new Error('Base URL 格式不正确，请填写完整的 http(s) 地址')
   }
 
-  if (url.protocol === 'http:') {
-    if (!isLoopbackHost(url.hostname)) {
-      throw new Error('不安全的 HTTP 连接：API Key 将以明文传输，请使用 HTTPS 地址（仅 localhost/127.0.0.1 允许 HTTP）')
+  if (url.protocol !== 'https:') {
+    if (url.protocol === 'http:') {
+      throw new Error('不安全的 HTTP 连接：API Key 将以明文传输，请使用 HTTPS 地址')
     }
-  } else if (url.protocol !== 'https:') {
     throw new Error('Base URL 仅支持 https 协议')
   }
 

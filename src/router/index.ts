@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue'
 import UploadView from '@/views/UploadView.vue'
 import ChatView from '@/views/ChatView.vue'
 import FavoritesView from '@/views/FavoritesView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/favorites',
       name: 'favorites',
       component: FavoritesView
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView
     }
   ],
   scrollBehavior() {

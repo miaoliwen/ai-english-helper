@@ -22,45 +22,41 @@ const MAX_SEGMENT_LENGTH = 8000
 /**
  * 已知注入模式。中英双语，覆盖角色标签、指令劫持、上下文溢出等。
  * 匹配规则：忽略大小写、忽略零宽字符；命中后整行替换为 [已过滤]。
- *
- * 重要：每条模式都必须「在合理阅读题面里几乎不会自然出现」，
- * 否则会把正常题目（"What does the author pretend to be?"）误杀。
  */
 const INJECTION_PATTERNS: RegExp[] = [
-  // 角色/系统标签仿冒（带特殊标点，常规英语阅读不会自然出现）
-  /(system|assistant|user)\s*[:|>]/giu,
-  /<\|(system|assistant|user)\|>/giu,
-  /\[(?:system|assistant|user)\]/giu,
+  // 角色/系统标签仿冒（不再仅匹配行首，防止插入空格/标点绕过）
+  /(system|assistant|user)\s*[:|>]/im,
+  /<\|(system|assistant|user)\|>/im,
+  /\[(system|assistant|user)\]/im,
   // 常见指令劫持 — 英文
-  /ignore\s+(all\s+)?(previous|prior|above|system|earlier)\s*(instructions?|prompts?|rules?|directives?|constraints?)/giu,
-  /forget\s+(everything|all|your\s+role|previous|what\s+you|instructions?)/giu,
-  /disregard\s+(previous|prior|all|above|earlier|any)/giu,
-  /override\s+(previous|prior|system|default|safety|all)\s*(instructions?|rules?|prompts?|settings?)/giu,
-  /do\s+not\s+(follow|obey|comply\s+with)\s+(your|the|previous|system)\s*(instructions?|rules?|guidelines?)/giu,
-  /never\s+mind\s+(the|your|previous|above)\s*(instructions?|rules?|prompt)/giu,
-  /skip\s+(the|all|previous|above)\s*(instructions?|rules?|guidelines?|restrictions?)/giu,
-  // 常见指令劫持 — 中文（要求紧邻明确的"指令/规则/设定"对象）
-  /忽略\s*(以上|之前|上述|先前的?|所有|全部)\s*(指令|规则|提示|设定|约束|要求|限制)/giu,
-  /忘记\s*(你的?|所有|之前|以上)\s*(角色|指令|规则|设定|任务|身份)/giu,
-  /抛弃\s*(以上|之前|所有)\s*(指令|规则|设定|约束)/giu,
-  /不要\s*(遵守|遵循|执行|理会)\s*(你的?|之前|以上|系统)\s*(指令|规则|设定|约束)/giu,
-  /跳过\s*(所有|之前|以上)\s*(指令|规则|限制|约束)/giu,
-  // 角色重置类（必须有明确的"重置/重设/重置你/重新设定"动词 + "角色/任务/指令"宾语，
-  // 避免误杀 "重置你的学习计划" 这类正常阅读文本）
-  /(?:重置|重设|重新设定)\s*(?:你的|我的)?\s*(?:角色|任务|指令|规则|设定|身份)/giu,
-  // 角色扮演劫持 — 英文（需要明确的"act as/pretend to be" + 紧跟指令语气）
-  /(?:^|\s)(?:please\s+)?(?:act\s+as|you\s+are\s+now|you're\s+now|from\s+now\s+on\s+you\s+are|pretend\s+(?:to\s+be|you\s+are))\s+(?:a|an|the|my)\s+[a-z]+/giu,
-  // 角色扮演劫持 — 中文（"从现在起你是 X" 完整语气）
-  /(?:从现在(?:起|开始)|现在起|现在开始)\s*你\s*(?:是|扮演|变[成成])\s*[^\s，。；,.;:]{1,20}/giu,
-  /请\s*扮演\s*(?:一个|一名|一位)\s*[^\s，。；,.;:]{1,20}/giu,
+  /ignore\s+(all\s+)?(previous|prior|above|system|earlier)\s*(instructions?|prompts?|rules?|directives?|constraints?)/gi,
+  /forget\s+(everything|all|your\s+role|previous|what\s+you|instructions?)/gi,
+  /disregard\s+(previous|prior|all|above|earlier|any)/gi,
+  /override\s+(previous|prior|system|default|safety|all)\s*(instructions?|rules?|prompts?|settings?)/gi,
+  /do\s+not\s+(follow|obey|comply\s+with)\s+(your|the|previous|system)\s*(instructions?|rules?|guidelines?)/gi,
+  /never\s+mind\s+(the|your|previous|above)\s*(instructions?|rules?|prompt)/gi,
+  /skip\s+(the|all|previous|above)\s*(instructions?|rules?|guidelines?|restrictions?)/gi,
+  // 常见指令劫持 — 中文
+  /忽略\s*(以上|之前|上述|先前的?|所有|全部)?\s*(指令|规则|提示|设定|约束|要求|限制)/gi,
+  /忘记\s*(你的?|所有|之前|以上)?\s*(角色|指令|规则|设定|任务|身份)/gi,
+  /抛弃\s*(以上|之前|所有)?\s*(指令|规则|设定|约束)/gi,
+  /不要\s*(遵守|遵循|执行|理会)\s*(你的?|之前|以上|系统)?\s*(指令|规则|设定|约束)/gi,
+  /跳过\s*(所有|之前|以上)?\s*(指令|规则|限制|约束)/gi,
+  /你的新任务是/gi,
+  /重新设定/gi,
+  /重置你的/gi,
+  // 角色扮演劫持 — 英文
+  /你现在是|从现在开始你|请扮演|act as|you are now|pretend (to be|you)|you're now/gi,
+  /扮演\s*(一个|一名|一位)?\s*(新|不同|其他|别的)/gi,
+  /从现在起\s*(你|你的)/gi,
   // 分隔符绕过检测：用分隔符/Unicode拆字/同形字符绕过关键词
-  /s[\s\-._]?y[\s\-._]?s[\s\-._]?t[\s\-._]?e[\s\-._]?m\s*[:|>]/giu,
-  /a[\s\-._]?s[\s\-._]?s[\s\-._]?i[\s\-._]?s[\s\-._]?t[\s\-._]?a[\s\-._]?n[\s\-._]?t\s*[:|>]/giu,
+  /s[\s\-._]?y[\s\-._]?s[\s\-._]?t[\s\-._]?e[\s\-._]?m\s*[:|>]/im,
+  /a[\s\-._]?s[\s\-._]?s[\s\-._]?i[\s\-._]?s[\s\-._]?t[\s\-._]?a[\s\-._]?n[\s\-._]?t\s*[:|>]/im,
   // 输出格式劫持
-  /输出\s*[:：]\s*\{/giu,
-  /(?:return|respond(?:ing)?)\s+(?:in\s+)?json/giu,
+  /输出\s*[:：]\s*\{/gi,
+  /return\s+json|respond\s+(in\s+)?json|格式化?为\s*json/gi,
   // 隐藏控制字符（零宽字符、RTL 覆盖等）
-  /[​-‍‪-‮⁦-⁩﻿]/gu,
+  /[​-‍‪-‮⁦-⁩﻿]/g,
 ]
 
 /**
@@ -74,14 +70,12 @@ export function sanitizeUntrusted(input: string | null | undefined): string {
   let text = String(input)
 
   // 1. 移除零宽字符（常用于隐藏注入）
-  text = text.replace(/[​-‍‪-‮⁦-⁩﻿]/gu, '')
+  text = text.replace(/[​-‍‪-‮⁦-⁩﻿]/g, '')
 
   // 2. 行级过滤：把命中注入模式的整行替换为占位符
   const lines = text.split(/\r?\n/)
   const filtered = lines.map((line) => {
     for (const pattern of INJECTION_PATTERNS) {
-      // 每次 test 前重置 lastIndex，避免带 /g 标志的 regex 状态污染
-      pattern.lastIndex = 0
       if (pattern.test(line)) {
         return '[已过滤：检测到疑似指令注入]'
       }

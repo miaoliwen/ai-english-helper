@@ -1,12 +1,13 @@
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-20">
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+  <a href="#upload-main" class="skip-link">跳转到主内容</a>
+  <div class="page-shell py-8 pb-24" id="upload-main">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10">
       <!-- Upload Panel -->
       <div class="lg:col-span-2 space-y-6">
         <div>
-          <div class="section-label">Image Upload</div>
-          <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight mb-2">图片上传</h2>
-          <p class="text-neutral-500 dark:text-neutral-400">支持拖拽或点击上传英语题目图片</p>
+          <p class="section-label">Image Upload</p>
+          <h2 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tighter mb-2">图片上传</h2>
+          <p class="page-lead">拖拽、点击或拍照，识别英语题目内容</p>
         </div>
 
         <div
@@ -15,8 +16,8 @@
           @drop.prevent="handleDrop"
           @click="triggerFileInput"
           :class="[
-            'relative border-2 border-dashed rounded-4xl p-12 text-center cursor-pointer transition-all duration-500',
-            isDragging ? 'border-accent-400 bg-accent-50/50' : 'border-neutral-200 dark:border-neutral-700 hover:border-accent-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+            'upload-zone p-10 sm:p-12 text-center',
+            isDragging ? 'upload-zone-active' : 'upload-zone-idle'
           ]"
         >
           <input ref="fileInput" type="file" accept="image/*" capture="environment" class="hidden" @change="handleFileSelect" />
@@ -30,7 +31,7 @@
         </div>
 
         <!-- Preview -->
-        <div v-if="previewImage" class="card-surface p-4">
+        <div v-if="previewImage" class="surface-panel p-4">
           <div class="flex items-center justify-between mb-3">
             <span class="text-sm font-semibold text-neutral-700 dark:text-neutral-300">图片预览</span>
             <button @click="clearImage" class="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all touch-target">
@@ -46,7 +47,7 @@
 
         <!-- Actions -->
         <div v-if="previewImage" class="space-y-3">
-          <div v-if="!store.isVisionModelConfigured" class="flex items-center gap-2.5 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3">
+          <div v-if="!store.isVisionModelConfigured" class="alert-banner-warn">
             <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
             </svg>
@@ -77,8 +78,8 @@
       <div ref="resultsPanel" class="lg:col-span-3 space-y-6">
         <div class="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div class="section-label">OCR Result</div>
-            <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">识别结果</h2>
+            <p class="section-label">OCR Result</p>
+            <h2 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tighter">识别结果</h2>
           </div>
           <div class="flex items-center gap-2">
             <ModelSwitcher
@@ -93,7 +94,7 @@
           </div>
         </div>
 
-        <div v-if="!ocrResult && !isProcessing" class="card-surface p-8 sm:p-12 lg:p-16 text-center">
+        <div v-if="!ocrResult && !isProcessing" class="surface-panel p-10 sm:p-14 lg:p-16 text-center">
           <div class="w-14 h-14 bg-neutral-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg class="w-7 h-7 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
@@ -102,7 +103,7 @@
           <p class="text-neutral-500 dark:text-neutral-400">上传图片后将在此显示识别结果</p>
         </div>
 
-        <div v-else-if="isProcessing" class="card-surface p-12 text-center">
+        <div v-else-if="isProcessing" class="surface-panel p-12 text-center">
           <div class="flex items-center justify-center gap-2 mb-4">
             <div class="w-2.5 h-2.5 bg-accent-500 rounded-full animate-bounce"></div>
             <div class="w-2.5 h-2.5 bg-accent-500 rounded-full animate-bounce animation-delay-150"></div>
@@ -111,7 +112,7 @@
           <p class="text-neutral-600 dark:text-neutral-400">正在识别图片内容...</p>
         </div>
 
-        <div v-else-if="ocrResult" class="card-surface overflow-hidden">
+        <div v-else-if="ocrResult" class="surface-panel overflow-hidden">
           <div class="px-6 py-4 bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-100 flex items-center justify-between">
             <span class="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Markdown</span>
             <button @click="addToFavorites" class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-accent-600 hover:text-accent-700 hover:bg-accent-50 font-medium transition-colors touch-target">
@@ -121,8 +122,8 @@
               <span>收藏</span>
             </button>
           </div>
-          <div class="p-6">
-            <MarkdownRenderer :content="ocrResult.markdown" />
+          <div class="p-4 sm:p-6">
+            <MarkdownRenderer reading :content="ocrResult.markdown" />
           </div>
         </div>
 
@@ -150,16 +151,6 @@
       </div>
     </div>
 
-    <!-- Toast: 使用 top-safe 避开刘海 -->
-    <Transition name="scale">
-      <div v-if="toast" class="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl shadow-lg text-sm font-medium"
-           :style="{ top: `max(5.5rem, calc(env(safe-area-inset-top, 0px) + 1rem))` }"
-           :class="toast.type === 'success' ? 'bg-neutral-900 text-white' : 'bg-red-600 text-white'">
-        {{ toast.message }}
-      </div>
-    </Transition>
-
-    <SettingsModal v-model:visible="isSettingsOpen" />
   </div>
 </template>
 
@@ -168,34 +159,26 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { recognizeImage, mockRecognizeImage } from '@/services/mimo'
+import { useToast } from '@/composables/useToast'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import ExportPanel from '@/components/ExportPanel.vue'
 import ModelSwitcher from '@/components/ModelSwitcher.vue'
-import SettingsModal from '@/components/SettingsModal.vue'
 
 const USE_REAL_API = true
 
 const store = useAppStore()
 const router = useRouter()
+const { showToast } = useToast()
 
 const fileInput = ref<HTMLInputElement>()
 const resultsPanel = ref<HTMLElement>()
 const isDragging = ref(false)
 const previewImage = ref('')
 const isProcessing = ref(false)
-const toast = ref<{ type: 'success' | 'error'; message: string } | null>(null)
-let toastTimer: ReturnType<typeof setTimeout> | null = null
-
-function showToast(type: 'success' | 'error', message: string) {
-  toast.value = { type, message }
-  if (toastTimer) clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toast.value = null }, 2400)
-}
 
 const ocrResult = computed(() => store.currentOCR)
 
-const isSettingsOpen = ref(false)
-function openSettings() { isSettingsOpen.value = true }
+function openSettings() { store.openSettings() }
 
 async function onSelectVision(id: string) {
   await store.setActiveVisionPreset(id)

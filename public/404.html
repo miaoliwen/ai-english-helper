@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI英语解题助手</title>
+  <script>
+    // GitHub Pages SPA fallback:
+    // 当用户直接访问深链 (如 /ai-english-helper/upload) 时,
+    // GitHub Pages 会返回此 404.html。我们把原始路径暂存到
+    // sessionStorage, 然后跳转到站点根 (index.html),
+    // 由 main.ts 恢复路径并交给 Vue Router 处理。
+    (function () {
+      var path = location.pathname;
+      var search = location.search;
+      var hash = location.hash;
+      // 去掉尾随斜杠后, 取最后一个 / 之前的部分作为 base
+      var stripped = path.replace(/\/+$/, '');
+      var lastSlash = stripped.lastIndexOf('/');
+      var base = lastSlash > 0 ? stripped.substring(0, lastSlash + 1) : '/';
+      try {
+        sessionStorage.setItem('gh-404-path', path + search + hash);
+      } catch (e) { /* sessionStorage 不可用时直接回首页 */ }
+      location.replace(base);
+    })();
+  </script>
+</head>
+<body></body>
+</html>

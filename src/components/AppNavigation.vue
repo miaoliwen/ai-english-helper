@@ -4,8 +4,8 @@
       <div class="liquid-glass rounded-3xl px-5 py-3">
         <div class="flex items-center justify-between">
           <router-link to="/" class="flex items-center gap-2.5 group">
-            <div class="w-8 h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-glow transition-transform duration-300 group-hover:scale-105">
-              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <div class="w-8 h-8 bg-neutral-900 dark:bg-neutral-100 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <svg class="w-4 h-4 text-white dark:text-neutral-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
               </svg>
             </div>
@@ -18,7 +18,7 @@
               :key="item.path"
               :to="item.path"
               class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300"
-              :class="$route.path === item.path ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800'"
+              :class="isActiveRoute(item.path) ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800'"
             >
               {{ item.name }}
             </router-link>
@@ -38,7 +38,7 @@
             </button>
 
             <button
-              @click="isSettingsOpen = true"
+              @click="store.openSettings()"
               class="p-2 rounded-xl text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800 transition-all duration-300 touch-target"
               title="模型设置"
               aria-label="模型设置"
@@ -76,7 +76,7 @@
               </svg>
             </button>
             <button
-              @click="isSettingsOpen = true"
+              @click="store.openSettings()"
               class="p-2 rounded-xl text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800 transition-colors touch-target"
               title="模型设置"
               aria-label="模型设置"
@@ -100,25 +100,33 @@
             :to="item.path"
             @click="isMobileMenuOpen = false"
             class="block px-4 py-3 rounded-2xl text-sm font-medium transition-all"
-            :class="$route.path === item.path ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400' : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'"
+            :class="isActiveRoute(item.path) ? 'bg-accent-50 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400' : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800'"
           >
             {{ item.name }}
           </router-link>
         </div>
       </div>
     </transition>
-    <SettingsModal v-model:visible="isSettingsOpen" />
+    <SettingsModal v-model:visible="store.settingsModalOpen" />
   </nav>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
+import { useAppStore } from '@/stores/app'
 import SettingsModal from '@/components/SettingsModal.vue'
 
 const isMobileMenuOpen = ref(false)
-const isSettingsOpen = ref(false)
+const store = useAppStore()
+const route = useRoute()
 const { isDark, toggleTheme } = useTheme()
+
+function isActiveRoute(path: string) {
+  if (path === '/') return route.path === '/'
+  return route.path === path || route.path.startsWith(path + '/')
+}
 
 const navItems = [
   { name: '首页', path: '/' },

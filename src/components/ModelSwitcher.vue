@@ -1,13 +1,18 @@
 <template>
-  <div ref="rootEl" class="relative inline-block">
+  <div ref="rootEl" class="relative inline-block" :class="centered ? 'w-full flex justify-center' : ''">
     <button
       type="button"
+      ref="triggerRef"
       @click="toggle"
+      @keydown="handleTriggerKeydown"
       :disabled="disabled"
-      class="flex items-center gap-1.5 max-w-[200px] px-2.5 py-2 rounded-lg text-sm font-medium
+      class="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-medium
              text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800
              disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-target"
+      :class="centered ? 'max-w-[220px] justify-center' : 'max-w-[200px]'"
       :title="title"
+      :aria-expanded="open"
+      aria-haspopup="listbox"
     >
       <span class="truncate">{{ activeName || '未选择' }}</span>
       <svg class="w-3.5 h-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -17,7 +22,8 @@
 
     <Transition name="scale">
       <div v-if="open"
-           class="absolute z-40 top-full mt-1.5 right-0 min-w-[180px] max-w-[calc(100vw-2rem)] card-surface p-1 shadow-lg">
+           class="absolute z-40 top-full mt-1.5 min-w-[180px] max-w-[calc(100vw-2rem)] card-surface p-1 shadow-lg"
+           :class="centered ? 'left-1/2 -translate-x-1/2' : 'right-0'">
         <div class="px-2 py-1.5 text-xs font-semibold tracking-widest uppercase text-neutral-400">
           {{ kind === 'chat' ? '对话模型预设' : '视觉模型预设' }}
         </div>
@@ -25,10 +31,14 @@
           <li v-for="p in presets" :key="p.id">
             <button
               type="button"
+              ref="presetButtons"
               @click="select(p.id)"
+              @keydown="handleItemKeydown($event, p.id)"
               class="w-full flex items-center gap-2 px-2 py-2.5 rounded-md text-sm text-left
                      hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
               :class="p.id === activeId ? 'bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-400' : 'text-neutral-700 dark:text-neutral-200'"
+              role="option"
+              :aria-selected="p.id === activeId"
             >
               <span class="truncate flex-1">{{ p.name || '未命名预设' }}</span>
               <span v-if="!p.apiKey" class="shrink-0 text-[10px] text-amber-600 dark:text-amber-400">无 Key</span>
@@ -58,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { ModelPreset } from '@/types'
 
 const props = defineProps<{
@@ -66,6 +76,7 @@ const props = defineProps<{
   presets: ModelPreset[]
   activeId: string
   disabled?: boolean
+  centered?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -75,6 +86,9 @@ const emit = defineEmits<{
 
 const open = ref(false)
 const rootEl = ref<HTMLDivElement | null>(null)
+const triggerRef = ref<HTMLButtonElement | null>(null)
+const presetButtons = ref<HTMLButtonElement[]>([])
+const highlightedIndex = ref(-1)
 
 const activeName = computed(
   () => props.presets.find((p) => p.id === props.activeId)?.name || ''
@@ -87,21 +101,68 @@ const title = computed(() =>
 function toggle() {
   if (props.disabled) return
   open.value = !open.value
+  if (open.value) {
+    highlightedIndex.value = props.presets.findIndex((p) => p.id === props.activeId)
+    nextTick(() => {
+      const idx = highlightedIndex.value
+      if (idx >= 0 && presetButtons.value[idx]) {
+        presetButtons.value[idx].focus()
+      } else if (presetButtons.value[0]) {
+        presetButtons.value[0].focus()
+      }
+    })
+  }
 }
 
 function select(id: string) {
   open.value = false
+  triggerRef.value?.focus()
   if (id !== props.activeId) emit('select', id)
 }
 
 function manage() {
   open.value = false
+  triggerRef.value?.focus()
   emit('manage')
 }
 
 function onDocClick(e: MouseEvent) {
   if (!open.value) return
   if (rootEl.value && !rootEl.value.contains(e.target as Node)) {
+    open.value = false
+  }
+}
+
+// 键盘导航：触发按钮
+function handleTriggerKeydown(e: KeyboardEvent) {
+  if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    if (!open.value) toggle()
+  }
+}
+
+// 键盘导航：下拉项
+function handleItemKeydown(e: KeyboardEvent, id: string) {
+  const items = presetButtons.value
+  const len = items.length
+  const current = items.findIndex((btn) => document.activeElement === btn)
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    const next = current + 1 < len ? current + 1 : 0
+    items[next]?.focus()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    const prev = current - 1 >= 0 ? current - 1 : len - 1
+    items[prev]?.focus()
+  } else if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    select(id)
+  } else if (e.key === 'Escape') {
+    e.preventDefault()
+    open.value = false
+    triggerRef.value?.focus()
+  } else if (e.key === 'Tab') {
     open.value = false
   }
 }
