@@ -20,6 +20,8 @@ export interface ServerModelConfig {
   modelId: string        // 模型ID
   description?: string   // 描述信息
   available: boolean     // 是否可用
+  type?: string
+  providerName?: string
 }
 
 // 全局配置
