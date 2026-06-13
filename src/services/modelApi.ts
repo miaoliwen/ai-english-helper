@@ -11,7 +11,9 @@ export async function detectApiFormat(baseUrl: string): Promise<ApiFormat> {
       headers: { 'Content-Type': 'application/json' }
     })
     if (response.ok) return 'openai'
-  } catch {}
+  } catch (e) {
+    // 继续尝试其他格式
+  }
 
   // 尝试DeepSeek格式
   try {
@@ -20,7 +22,9 @@ export async function detectApiFormat(baseUrl: string): Promise<ApiFormat> {
       headers: { 'Content-Type': 'application/json' }
     })
     if (response.ok) return 'deepseek'
-  } catch {}
+  } catch (e) {
+    // 继续尝试其他格式
+  }
 
   // 默认返回auto
   return 'auto'

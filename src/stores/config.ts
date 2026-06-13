@@ -41,7 +41,9 @@ function loadConfig(): AppConfig {
       }
       return parsed
     }
-  } catch {}
+  } catch (e) {
+    // 使用默认配置
+  }
   
   // 返回默认配置
   return {
