@@ -144,12 +144,11 @@ export const useConfigStore = defineStore('config', () => {
   }
 
   function getCustomModelsByType(modelType: ModelType): CustomModelConfig[] {
-    // 根据modelId判断类型（简单判断）
     return config.value.customModels.filter(m => {
       if (modelType === 'chat') {
         return !m.modelId.includes('vision') && !m.modelId.includes('gpt-4o')
       } else {
-        return m.modelId.includes('vision') || m.modelId.includes('gpt-4o')
+        return m.modelId.includes('vision') || m.modelId.includes('gpt-4o') || m.modelId === ''
       }
     })
   }

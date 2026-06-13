@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useConfigStore } from '@/stores/config'
 import type { CustomModelConfig, ModelType } from '@/types/config'
 import type { DiagnosticResult } from './ModelForm.vue'
@@ -211,12 +211,6 @@ async function testConnection() {
 
 function onModelUpdate(val: CustomModelConfig) {
   editing.value = val
+  store.updateCustomModel(val)
 }
-
-// 监听模型更新
-watch(editing, (val) => {
-  if (val) {
-    store.updateCustomModel(val)
-  }
-}, { deep: true })
 </script>

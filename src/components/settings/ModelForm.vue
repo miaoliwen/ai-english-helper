@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import type { CustomModelConfig } from '@/types/config'
 import ModelListSelector from './ModelListSelector.vue'
 
@@ -118,21 +118,25 @@ const emit = defineEmits<{
   'back': []
 }>()
 
-const local = ref<CustomModelConfig>({
-  id: props.model?.id ?? '',
-  name: props.model?.name ?? '',
-  apiKey: props.model?.apiKey ?? '',
-  baseUrl: props.model?.baseUrl ?? '',
-  modelId: props.model?.modelId ?? '',
-  apiFormat: props.model?.apiFormat ?? 'auto'
+const local = reactive<CustomModelConfig>({
+  id: '',
+  name: '',
+  apiKey: '',
+  baseUrl: '',
+  modelId: '',
+  apiFormat: 'auto'
 })
 
-watch(() => props.model?.id, (newId) => {
-  if (newId && newId !== local.value.id) {
-    const m = props.model
-    if (m) local.value = { ...m }
+watch(() => props.model, (m) => {
+  if (m) {
+    local.id = m.id
+    local.name = m.name
+    local.apiKey = m.apiKey
+    local.baseUrl = m.baseUrl
+    local.modelId = m.modelId
+    local.apiFormat = m.apiFormat
   }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 watch(local, (val) => {
   emit('update:model', { ...val })
