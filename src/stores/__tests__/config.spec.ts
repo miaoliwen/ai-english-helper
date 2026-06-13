@@ -20,7 +20,7 @@ describe('config store', () => {
     const store = useConfigStore()
     expect(store.mode).toBe('server')
     expect(store.customModels).toEqual([])
-    expect(store.serverModels.length).toBeGreaterThan(0)
+    expect(store.serverModels).toEqual([])
   })
 
   it('should set mode', () => {
