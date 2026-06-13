@@ -87,14 +87,14 @@ describe('modelApi', () => {
         json: () => Promise.resolve({ data: [] })
       }))
 
-      const result = await testConnection('https://api.openai.com', 'sk-test', 'gpt-4', 'openai')
+      const result = await testConnection('https://api.openai.com', 'sk-test', 'openai')
       expect(result.success).toBe(true)
     })
 
     it('should return failure when connection fails', async () => {
       vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')))
 
-      const result = await testConnection('https://api.openai.com', 'sk-test', 'gpt-4', 'openai')
+      const result = await testConnection('https://api.openai.com', 'sk-test', 'openai')
       expect(result.success).toBe(false)
       expect(result.message).toBe('Network error')
     })

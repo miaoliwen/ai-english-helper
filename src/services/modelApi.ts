@@ -99,7 +99,6 @@ export async function fetchModelList(
 export async function testConnection(
   baseUrl: string,
   apiKey: string,
-  modelId: string,
   format: ApiFormat = 'auto'
 ): Promise<{ success: boolean; message: string }> {
   try {
