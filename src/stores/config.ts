@@ -8,24 +8,6 @@ import { encodeApiKey, decodeApiKey } from '@/utils/crypto'
 
 const APP_CONFIG_KEY = 'aieh-app-config'
 
-// 默认服务端模型
-const defaultServerModels: ServerModelConfig[] = [
-  {
-    id: 'server-chat-default',
-    name: 'DeepSeek Chat',
-    modelId: 'deepseek-chat',
-    description: '服务端提供的对话模型',
-    available: true
-  },
-  {
-    id: 'server-vision-default',
-    name: 'GPT-4o',
-    modelId: 'gpt-4o',
-    description: '服务端提供的视觉模型',
-    available: true
-  }
-]
-
 // 加载配置
 function loadConfig(): AppConfig {
   try {
@@ -49,7 +31,7 @@ function loadConfig(): AppConfig {
   return {
     mode: 'server',
     customModels: [],
-    serverModels: defaultServerModels,
+    serverModels: [],
     activeChatId: '',
     activeVisionId: ''
   }
@@ -153,6 +135,28 @@ export const useConfigStore = defineStore('config', () => {
     })
   }
 
+  async function fetchServerModels(): Promise<ServerModelConfig[]> {
+    try {
+      const token = localStorage.getItem('aieh-access-token') || '';
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const response = await fetch(`${baseUrl}/api/models/server`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return (data.models || []).map((m: any) => ({
+        id: m.id,
+        name: m.name,
+        modelId: m.modelId,
+        type: m.type,
+        providerName: m.providerName,
+        available: true,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
   return {
     config,
     mode,
@@ -165,6 +169,7 @@ export const useConfigStore = defineStore('config', () => {
     updateCustomModel,
     removeCustomModel,
     setActiveModel,
-    getCustomModelsByType
+    getCustomModelsByType,
+    fetchServerModels
   }
 })
