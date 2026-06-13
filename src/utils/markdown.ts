@@ -57,6 +57,7 @@ const defaultLinkOpen = md.renderer.rules.link_open ||
   }
 md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
   const token = tokens[idx]
+  if (!token) return defaultLinkOpen(tokens, idx, options, env, self)
   const href = token.attrGet('href') || ''
   // 内部锚点 / 相对路径不强制新窗口
   if (/^https?:\/\//i.test(href)) {
@@ -101,7 +102,7 @@ export function extractTextFromMarkdown(markdown: string): string {
   return markdown
     .replace(/<[^>]+>/g, '')
     .replace(/#{1,6}\s/g, '')
-    .replace(/\*\*|\*|__|\_/g, '')
+    .replace(/\*\*|\*|__|_/g, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
     .replace(/`{3}[\s\S]*?`{3}/g, '')

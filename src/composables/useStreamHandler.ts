@@ -1,16 +1,13 @@
 import { ref, onBeforeUnmount } from 'vue'
-import { streamChatCompletion, mockStreamChatCompletion } from '@/services/deepseek'
+import { streamChatCompletion } from '@/services/deepseek'
 import type { DeepSeekMessage } from '@/types'
 
 export interface StreamHandlerOptions {
   messages: DeepSeekMessage[]
-  baseUrl: string
-  apiKey: string
   modelId: string
   onChunk: (chunk: string) => void
   onDone?: () => void
   onError?: (error: Error) => void
-  useRealApi?: boolean
 }
 
 export function useStreamHandler() {
@@ -18,9 +15,8 @@ export function useStreamHandler() {
   let abortController: AbortController | null = null
 
   async function startStream(options: StreamHandlerOptions): Promise<string> {
-    const { messages, baseUrl, apiKey, modelId, onChunk, onDone, onError, useRealApi = true } = options
+    const { messages, modelId, onChunk, onDone, onError } = options
 
-    // Abort any existing stream before starting a new one
     cancelStream()
 
     isStreaming.value = true
@@ -30,8 +26,7 @@ export function useStreamHandler() {
     let currentText = ''
 
     try {
-      const apiCall = useRealApi ? streamChatCompletion : mockStreamChatCompletion
-      await apiCall(
+      await streamChatCompletion(
         messages,
         (chunk) => {
           if (signal.aborted) return
@@ -40,7 +35,6 @@ export function useStreamHandler() {
         },
         () => { isStreaming.value = false; onDone?.() },
         (error) => {
-          // Don't report abort as an error
           if (signal.aborted) {
             isStreaming.value = false
             return
@@ -49,7 +43,7 @@ export function useStreamHandler() {
           isStreaming.value = false
           onError?.(error)
         },
-        { baseUrl, apiKey, modelId, signal }
+        { modelId, signal }
       )
     } catch (error) {
       if (!signal.aborted) {

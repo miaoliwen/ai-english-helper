@@ -15,6 +15,13 @@ try {
 } catch { /* sessionStorage 不可用时跳过 */ }
 
 const app = createApp(App)
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
+
+// 初始化认证状态（检查本地 refresh token）
+const { useAuthStore } = await import('@/stores/auth')
+const auth = useAuthStore()
+auth.init()
+
 app.mount('#app')

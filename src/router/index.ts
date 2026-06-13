@@ -1,9 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
-import UploadView from '@/views/UploadView.vue'
-import ChatView from '@/views/ChatView.vue'
-import FavoritesView from '@/views/FavoritesView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,22 +12,32 @@ const router = createRouter({
     {
       path: '/upload',
       name: 'upload',
-      component: UploadView
+      component: () => import('@/views/UploadView.vue')
     },
     {
       path: '/chat/:id?',
       name: 'chat',
-      component: ChatView
+      component: () => import('@/views/ChatView.vue')
     },
     {
       path: '/favorites',
       name: 'favorites',
-      component: FavoritesView
+      component: () => import('@/views/FavoritesView.vue')
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue')
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue')
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: NotFoundView
+      component: () => import('@/views/NotFoundView.vue')
     }
   ],
   scrollBehavior() {

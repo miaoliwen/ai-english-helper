@@ -1,115 +1,256 @@
 <template>
-  <a href="#favorites-main" class="skip-link">跳转到主内容</a>
-  <div class="page-shell py-8 pb-24" id="favorites-main">
+  <a
+    href="#favorites-main"
+    class="skip-link"
+  >跳转到主内容</a>
+  <div
+    id="favorites-main"
+    class="page-shell py-8 pb-24"
+  >
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
       <div>
         <p class="section-label">Library</p>
-        <h2 class="text-3xl md:text-4xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tighter">收藏图书馆</h2>
-        <p class="page-lead mt-3">离线保存的识别与对话，支持全文检索</p>
+        <h2 class="text-3xl md:text-4xl font-book tracking-tighter-section text-black dark:text-white">
+          收藏图书馆
+        </h2>
+        <p class="page-lead mt-3">
+          离线保存的识别与对话，支持全文检索
+        </p>
       </div>
       <div class="relative">
-        <input v-model="searchQuery" @input="handleSearch" type="text" placeholder="搜索收藏..."
-               inputmode="search" enterkeyhint="search" autocomplete="off"
-               class="input-field pl-11 pr-4 w-full sm:w-72" />
-        <svg class="w-5 h-5 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="搜索收藏..."
+          inputmode="search"
+          enterkeyhint="search"
+          autocomplete="off"
+          class="input-field pl-11 pr-4 w-full sm:w-72"
+          @input="handleSearch"
+        >
+        <svg
+          class="w-5 h-5 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+          />
         </svg>
       </div>
     </div>
 
     <!-- Filter Tabs -->
     <div class="flex items-center gap-2 mb-8 overflow-x-auto pb-1 -mx-1 px-1">
-      <button v-for="tab in tabs" :key="tab.value" @click="activeTab = tab.value"
-              class="pill-tab shrink-0"
-              :class="activeTab === tab.value ? 'pill-tab-active' : 'pill-tab-inactive'">
+      <button
+        v-for="tab in tabs"
+        :key="tab.value"
+        class="pill-tab shrink-0"
+        :class="activeTab === tab.value ? 'pill-tab-active' : 'pill-tab-inactive'"
+        @click="activeTab = tab.value"
+      >
         {{ tab.label }}
       </button>
     </div>
 
     <!-- Empty State -->
-    <div v-if="filteredItems.length === 0" class="surface-panel p-16 sm:p-20 text-center">
-      <div class="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-2xl flex items-center justify-center mx-auto mb-5">
-        <svg class="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0111.186 0z"/>
+    <div
+      v-if="filteredItems.length === 0"
+      class="surface-panel p-16 sm:p-20 text-center"
+    >
+      <div class="w-16 h-16 bg-black/5 dark:bg-white/10 rounded-full flex items-center justify-center mx-auto mb-5">
+        <svg
+          class="w-8 h-8 text-neutral-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0111.186 0z"
+          />
         </svg>
       </div>
-      <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">{{ searchQuery ? '没有找到匹配的收藏' : '暂无收藏内容' }}</h3>
-      <p class="text-neutral-500 dark:text-neutral-400 mb-6">{{ searchQuery ? '尝试其他关键词搜索' : '在识别或对话页面点击收藏按钮，将内容添加到这里' }}</p>
-      <router-link v-if="!searchQuery" to="/upload" class="btn-primary">去上传识别</router-link>
+      <h3 class="text-lg font-semibold text-black dark:text-white mb-2">
+        {{ searchQuery ? '没有找到匹配的收藏' : '暂无收藏内容' }}
+      </h3>
+      <p class="text-neutral-500 dark:text-neutral-400 mb-6">
+        {{ searchQuery ? '尝试其他关键词搜索' : '在识别或对话页面点击收藏按钮，将内容添加到这里' }}
+      </p>
+      <router-link
+        v-if="!searchQuery"
+        to="/upload"
+        class="btn-primary"
+      >
+        去上传识别
+      </router-link>
     </div>
 
     <!-- Grid -->
-    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-      <div v-for="(item, index) in filteredItems" :key="item.id"
-           :style="{ '--i': index }"
-           class="bento-tile group cursor-pointer stagger-item"
-           @click="viewItem(item)">
+    <div
+      v-else
+      class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5"
+    >
+      <div
+        v-for="(item, index) in filteredItems"
+        :key="item.id"
+        :style="{ '--i': index }"
+        class="bento-tile group cursor-pointer stagger-item"
+        @click="viewItem(item)"
+      >
         <div class="flex items-start justify-between mb-4">
           <div class="flex items-center gap-2">
-            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold"
-                  :class="item.type === 'ocr' ? 'bg-accent-50 text-accent-700' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'">
+            <span
+              class="px-3 py-1 rounded-full text-xs font-semibold tracking-tight-tag"
+              :class="item.type === 'ocr'
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'bg-black/5 dark:bg-white/10 text-neutral-700 dark:text-neutral-300'"
+            >
               {{ item.type === 'ocr' ? '识别' : '对话' }}
             </span>
-            <span v-for="tag in item.tags.slice(0, 2)" :key="tag" class="px-2 py-0.5 bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 dark:text-neutral-400 rounded-lg text-xs font-medium">
+            <span
+              v-for="tag in item.tags.slice(0, 2)"
+              :key="tag"
+              class="px-2.5 py-0.5 bg-black/3 dark:bg-white/5 text-neutral-500 dark:text-neutral-400 rounded-full text-xs font-medium"
+            >
               {{ tag }}
             </span>
           </div>
           <div class="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-            <button @click.stop="exportItem(item)" class="p-2 text-neutral-300 hover:text-accent-600 hover:bg-accent-50 rounded-lg transition-all touch-target" title="导出 Markdown" aria-label="导出 Markdown">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+            <button
+              class="w-8 h-8 flex items-center justify-center text-neutral-300 hover:text-black hover:bg-black/5 dark:hover:text-white dark:hover:bg-white/10 rounded-full transition-all"
+              title="导出 Markdown"
+              aria-label="导出 Markdown"
+              @click.stop="exportItem(item)"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
+                />
               </svg>
             </button>
-            <button @click.stop="deleteItem(item.id)" class="p-2 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all touch-target" title="删除" aria-label="删除收藏">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+            <button
+              class="w-8 h-8 flex items-center justify-center text-neutral-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-all"
+              title="删除"
+              aria-label="删除收藏"
+              @click.stop="deleteItem(item.id)"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                />
               </svg>
             </button>
           </div>
         </div>
 
-        <h3 class="font-semibold text-neutral-900 dark:text-neutral-100 mb-2 line-clamp-1">{{ item.title }}</h3>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-3 leading-relaxed mb-4 border-l-2 border-neutral-200 dark:border-neutral-700 pl-3">
+        <h3 class="font-semibold text-black dark:text-white mb-2 line-clamp-1 tracking-tight-body">
+          {{ item.title }}
+        </h3>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-3 leading-relaxed mb-4 border-l-2 border-black/10 dark:border-white/10 pl-3 tracking-tight-body">
           {{ item.content.slice(0, 180) }}...
         </p>
 
         <div class="flex items-center justify-between">
-          <span class="text-xs text-neutral-400 font-mono">{{ formatDate(item.createdAt) }}</span>
-          <span class="text-sm text-accent-600 font-medium flex items-center gap-1">
+          <span class="text-xs text-neutral-400 font-mono tracking-tight-tag">{{ formatDate(item.createdAt) }}</span>
+          <span class="text-sm font-medium text-black dark:text-white flex items-center gap-1">
             查看详情
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+              />
             </svg>
           </span>
         </div>
       </div>
     </div>
 
-    <!-- Detail Modal: 移动端全屏 sheet，桌面端居中弹窗 -->
+    <!-- Detail Modal -->
     <Transition name="scale">
-      <div v-if="selectedItem" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" @click.self="selectedItem = null">
-        <div class="absolute inset-0 bg-neutral-900/30 backdrop-blur-sm"></div>
-        <div class="relative bg-white dark:bg-neutral-900 sm:rounded-4xl shadow-2xl w-full sm:max-w-3xl max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col
-                    rounded-t-3xl sm:rounded-4xl">
-          <div class="px-5 sm:px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between shrink-0">
+      <div
+        v-if="selectedItem"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
+        @click.self="selectedItem = null"
+      >
+        <div class="absolute inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm" />
+        <div
+          class="relative bg-white dark:bg-neutral-900 sm:rounded-3xl shadow-2xl w-full sm:max-w-3xl max-h-[90vh] sm:max-h-[80vh] overflow-hidden flex flex-col
+                    rounded-t-3xl sm:rounded-3xl"
+        >
+          <div class="px-5 sm:px-6 py-4 border-b border-black/6 dark:border-white/6 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-              <span class="px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0"
-                    :class="selectedItem.type === 'ocr' ? 'bg-accent-50 text-accent-700' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'">
+              <span
+                class="px-3 py-1 rounded-full text-xs font-semibold shrink-0"
+                :class="selectedItem.type === 'ocr'
+                  ? 'bg-black text-white dark:bg-white dark:text-black'
+                  : 'bg-black/5 dark:bg-white/10 text-neutral-700 dark:text-neutral-300'"
+              >
                 {{ selectedItem.type === 'ocr' ? '识别结果' : '对话记录' }}
               </span>
-              <h3 class="font-semibold text-neutral-900 dark:text-neutral-100 truncate">{{ selectedItem.title }}</h3>
+              <h3 class="font-semibold text-black dark:text-white truncate tracking-tight-body">
+                {{ selectedItem.title }}
+              </h3>
             </div>
             <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-              <ExportPanel :content="selectedItem.content" :title="selectedItem.title" />
-              <button @click="selectedItem = null" class="p-2 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-all touch-target">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              <ExportPanel
+                :content="selectedItem.content"
+                :title="selectedItem.title"
+              />
+              <button
+                class="w-9 h-9 flex items-center justify-center text-neutral-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-all"
+                @click="selectedItem = null"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
           </div>
           <div class="flex-1 overflow-y-auto p-5 sm:p-6 pb-nav">
-            <MarkdownRenderer reading :content="selectedItem.content" />
+            <MarkdownRenderer
+              reading
+              :content="selectedItem.content"
+            />
           </div>
         </div>
       </div>
@@ -123,7 +264,6 @@ import { useAppStore } from '@/stores/app'
 import type { FavoriteItem } from '@/types'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import ExportPanel from '@/components/ExportPanel.vue'
-import FileSaver from 'file-saver'
 import { useScrollLock } from '@/composables/useScrollLock'
 
 const store = useAppStore()
@@ -134,7 +274,6 @@ const selectedItem = ref<FavoriteItem | null>(null)
 
 useScrollLock(computed(() => selectedItem.value !== null))
 
-// 键盘导航：Escape 关闭详情弹窗
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && selectedItem.value) {
     selectedItem.value = null
@@ -171,7 +310,8 @@ onBeforeUnmount(() => {
 })
 
 function viewItem(item: FavoriteItem) { selectedItem.value = item }
-function exportItem(item: FavoriteItem) {
+async function exportItem(item: FavoriteItem) {
+  const FileSaver = await import('file-saver').then(m => m.default)
   const blob = new Blob([item.content], { type: 'text/markdown;charset=utf-8' })
   FileSaver.saveAs(blob, `${item.title}.md`)
 }

@@ -10,6 +10,13 @@ build/
 .env.*.local
 *.log
 
+# SQLite
+server/data/
+server/*.db
+server/**/*.db
+server/*.db-journal
+server/**/*.db-journal
+
 # 通用
 .DS_Store
 Thumbs.db

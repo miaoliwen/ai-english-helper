@@ -1,13 +1,19 @@
 <template>
-  <a href="#chat-main" class="skip-link">跳转到聊天内容</a>
-  <div id="chat-main" class="h-[100vh] h-[100dvh] lg:h-[calc(100vh-5rem)] lg:h-[calc(100dvh-5rem-env(safe-area-inset-top,0px))] max-w-7xl mx-auto lg:px-8">
+  <a
+    href="#chat-main"
+    class="skip-link"
+  >跳转到聊天内容</a>
+  <div
+    id="chat-main"
+    class="h-[100vh] h-[100dvh] lg:h-[calc(100vh-5rem)] lg:h-[calc(100dvh-5rem-env(safe-area-inset-top,0px))] max-w-7xl mx-auto lg:px-8"
+  >
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-0 lg:gap-5 h-full lg:py-5">
       <!-- Desktop sidebar -->
       <div class="hidden lg:block lg:col-span-1">
         <ChatSidebar
-          :currentOCR="store.currentOCR"
+          :current-o-c-r="store.currentOCR"
           :recent-chats="store.recentChats"
-          :currentChatId="currentSession?.id ?? null"
+          :current-chat-id="currentSession?.id ?? null"
           @new-chat="startNewChat"
           @load-chat="loadChat"
           @remove-chat="removeChat"
@@ -15,7 +21,7 @@
       </div>
 
       <!-- Chat Area -->
-      <div class="lg:col-span-3 flex flex-col h-full bg-white dark:bg-neutral-950 lg:card-surface overflow-hidden">
+      <div class="lg:col-span-3 flex flex-col h-full bg-white dark:bg-black lg:card-surface overflow-hidden">
         <ChatHeader
           :is-streaming="isStreaming"
           :model-presets="store.modelPresets"
@@ -52,9 +58,9 @@
     <!-- Mobile drawer -->
     <ChatMobileDrawer
       v-model:open="isHistoryOpen"
-      :currentOCR="store.currentOCR"
+      :current-o-c-r="store.currentOCR"
       :recent-chats="store.recentChats"
-      :currentChatId="currentSession?.id ?? null"
+      :current-chat-id="currentSession?.id ?? null"
       @new-chat="startNewChat"
       @load-chat="loadChat"
       @remove-chat="removeChat"
@@ -110,7 +116,6 @@ async function handleRegenerate() {
   })
 }
 
-// Keyboard: Escape closes history drawer
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && isHistoryOpen.value) {
     isHistoryOpen.value = false
@@ -124,12 +129,10 @@ onMounted(() => {
   if (chatId) {
     store.loadChat(chatId)
   } else if (store.currentChat) {
-    // 恢复上次活跃的聊天，更新 URL
     router.replace(`/chat/${store.currentChat.id}`)
   }
 })
 
-// Cancel stream when switching chats
 watch(() => route.params.id, async (id) => {
   cancelActiveStream()
   if (id) await store.loadChat(id as string)

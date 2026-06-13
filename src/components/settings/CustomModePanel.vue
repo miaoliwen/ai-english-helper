@@ -82,6 +82,7 @@
       :class="mobileStep === 'editor' ? 'block' : 'hidden md:block'"
     >
       <ModelForm
+        ref="modelFormRef"
         :model="editing"
         :diagnostic="diagnostic"
         @update:model="onModelUpdate"
@@ -126,7 +127,7 @@
 import { computed, ref } from 'vue'
 import { useConfigStore } from '@/stores/config'
 import type { CustomModelConfig, ModelType } from '@/types/config'
-import type { DiagnosticResult } from './ModelForm.vue'
+import ModelForm, { type DiagnosticResult } from './ModelForm.vue'
 import { testConnection as testConnectionApi } from '@/services/modelApi'
 
 const props = defineProps<{
@@ -135,6 +136,7 @@ const props = defineProps<{
 
 const store = useConfigStore()
 
+const modelFormRef = ref<InstanceType<typeof ModelForm> | null>(null)
 const editingId = ref<string | null>(null)
 const editing = ref<CustomModelConfig | null>(null)
 const mobileStep = ref<'list' | 'editor'>('list')
@@ -173,6 +175,7 @@ async function remove(id: string) {
 
 async function setActive() {
   if (!editing.value) return
+  if (!modelFormRef.value?.validate()) return
   store.updateCustomModel(editing.value)
   store.setActiveModel(editing.value.id, props.modelType)
   diagnostic.value = { 
@@ -184,6 +187,10 @@ async function setActive() {
 
 async function testConnection() {
   if (!editing.value) return
+  if (!modelFormRef.value?.validate()) {
+    testing.value = false
+    return
+  }
   testing.value = true
   diagnostic.value = null
   

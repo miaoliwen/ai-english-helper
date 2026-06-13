@@ -67,8 +67,6 @@ export function useChatActions() {
     try {
       const currentText = await startStream({
         messages,
-        baseUrl: store.modelSettings.chatBaseUrl,
-        apiKey: store.modelSettings.chatApiKey,
         modelId: store.modelSettings.chatModel,
         onChunk: (chunk) => {
           store.appendStreamContent(chunk)
@@ -144,6 +142,7 @@ export function useChatActions() {
     if (messages.length < 2) return
     const lastAssistant = messages[messages.length - 1]
     const lastUser = messages[messages.length - 2]
+    if (!lastAssistant || !lastUser) return
     if (lastAssistant.role !== 'assistant' || lastUser.role !== 'user') return
 
     // Remove last assistant message from DB, then re-send

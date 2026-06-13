@@ -1,5 +1,9 @@
 <template>
-  <div class="markdown-content" :class="{ 'markdown-reading': reading }" v-html="renderedContent"></div>
+  <div
+    class="markdown-content"
+    :class="{ 'markdown-reading': reading }"
+    v-html="renderedContent"
+  />
 </template>
 
 <script setup lang="ts">

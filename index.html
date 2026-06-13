@@ -4,22 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#f9fafb" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#030712" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="description" content="AI英语解题助手 - 拍照上传试卷或练习册，AI 识别题干并分步讲解" />
     <title>AI英语解题助手</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@320;330;340;400;450;480;540;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
     <style>
-      /* Geist 包不提供 style.css；通过 @font-face 直接加载 woff2 字体文件 */
       @font-face {
         font-family: 'Geist';
         font-style: normal;
         font-weight: 100 900;
         font-display: swap;
+        font-feature-settings: "kern" 1;
         src: url('https://cdn.jsdelivr.net/npm/geist@1.7.2/dist/fonts/geist-sans/Geist-Variable.woff2') format('woff2-variations');
       }
       @font-face {
@@ -27,7 +28,13 @@
         font-style: normal;
         font-weight: 100 900;
         font-display: swap;
+        font-feature-settings: "kern" 1;
         src: url('https://cdn.jsdelivr.net/npm/geist@1.7.2/dist/fonts/geist-mono/GeistMono-Variable.woff2') format('woff2-variations');
+      }
+
+      * {
+        font-feature-settings: "kern" 1;
+        font-kerning: normal;
       }
     </style>
   </head>

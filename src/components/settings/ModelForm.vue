@@ -22,7 +22,10 @@
           enterkeyhint="next"
           autocomplete="off"
           class="input-field text-sm"
+          :class="errors.name ? 'border-red-400 dark:border-red-600' : ''"
+          @input="clearError('name')"
         >
+        <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
       </div>
 
       <div>
@@ -47,7 +50,10 @@
           enterkeyhint="next"
           autocomplete="off"
           class="input-field text-sm"
+          :class="errors.baseUrl ? 'border-red-400 dark:border-red-600' : ''"
+          @input="clearError('baseUrl')"
         >
+        <p v-if="errors.baseUrl" class="mt-1 text-xs text-red-500">{{ errors.baseUrl }}</p>
       </div>
 
       <div>
@@ -59,7 +65,10 @@
           enterkeyhint="next"
           autocomplete="off"
           class="input-field text-sm"
+          :class="errors.apiKey ? 'border-red-400 dark:border-red-600' : ''"
+          @input="clearError('apiKey')"
         >
+        <p v-if="errors.apiKey" class="mt-1 text-xs text-red-500">{{ errors.apiKey }}</p>
       </div>
 
       <div>
@@ -69,10 +78,12 @@
           :model-id="local.modelId"
           :api-key="local.apiKey"
           :api-format="local.apiFormat"
+          :class="errors.modelId ? 'border-red-400 dark:border-red-600' : ''"
           @update:base-url="local.baseUrl = $event"
           @update:model-id="local.modelId = $event"
           @update:api-format="local.apiFormat = $event"
         />
+        <p v-if="errors.modelId" class="mt-1 text-xs text-red-500">{{ errors.modelId }}</p>
       </div>
 
       <div class="pt-2 flex flex-col gap-2">
@@ -108,6 +119,13 @@ export interface DiagnosticResult {
   details?: string
 }
 
+export interface ValidationErrors {
+  name?: string
+  baseUrl?: string
+  apiKey?: string
+  modelId?: string
+}
+
 const props = defineProps<{
   model: CustomModelConfig | null
   diagnostic: DiagnosticResult | null
@@ -126,6 +144,44 @@ const local = reactive<CustomModelConfig>({
   modelId: '',
   apiFormat: 'auto'
 })
+
+const errors = reactive<ValidationErrors>({})
+
+function clearError(field: keyof ValidationErrors) {
+  delete errors[field]
+}
+
+function validate(): boolean {
+  let valid = true
+  ;(Object.keys(errors) as (keyof ValidationErrors)[]).forEach(k => delete errors[k])
+
+  if (!local.name.trim()) {
+    errors.name = '请输入模型名称'
+    valid = false
+  }
+
+  if (!local.baseUrl.trim()) {
+    errors.baseUrl = '请输入 Base URL'
+    valid = false
+  } else if (!/^https?:\/\/.+/.test(local.baseUrl.trim())) {
+    errors.baseUrl = '请输入有效的 URL（以 http:// 或 https:// 开头）'
+    valid = false
+  }
+
+  if (!local.apiKey.trim()) {
+    errors.apiKey = '请输入 API Key'
+    valid = false
+  }
+
+  if (!local.modelId.trim()) {
+    errors.modelId = '请输入或选择一个模型 ID'
+    valid = false
+  }
+
+  return valid
+}
+
+defineExpose({ validate })
 
 watch(() => props.model, (m) => {
   if (m) {

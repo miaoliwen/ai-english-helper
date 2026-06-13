@@ -1,11 +1,17 @@
 <template>
   <div class="relative min-h-[100vh] min-h-[100dvh] bg-neutral-50 dark:bg-neutral-950 transition-colors duration-300">
-    <div class="app-grain" aria-hidden="true"></div>
+    <div
+      class="app-grain"
+      aria-hidden="true"
+    />
     <AppNavigation />
     <main :class="isChatRoute ? 'max-lg:pt-0 pt-nav' : 'pt-nav'">
       <router-view v-slot="{ Component, route }">
         <keep-alive>
-          <component :is="Component" :key="route.path" />
+          <component
+            :is="Component"
+            :key="route.path"
+          />
         </keep-alive>
       </router-view>
     </main>

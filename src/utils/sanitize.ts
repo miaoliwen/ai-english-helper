@@ -29,34 +29,34 @@ const INJECTION_PATTERNS: RegExp[] = [
   /<\|(system|assistant|user)\|>/im,
   /\[(system|assistant|user)\]/im,
   // 常见指令劫持 — 英文
-  /ignore\s+(all\s+)?(previous|prior|above|system|earlier)\s*(instructions?|prompts?|rules?|directives?|constraints?)/gi,
-  /forget\s+(everything|all|your\s+role|previous|what\s+you|instructions?)/gi,
-  /disregard\s+(previous|prior|all|above|earlier|any)/gi,
-  /override\s+(previous|prior|system|default|safety|all)\s*(instructions?|rules?|prompts?|settings?)/gi,
-  /do\s+not\s+(follow|obey|comply\s+with)\s+(your|the|previous|system)\s*(instructions?|rules?|guidelines?)/gi,
-  /never\s+mind\s+(the|your|previous|above)\s*(instructions?|rules?|prompt)/gi,
-  /skip\s+(the|all|previous|above)\s*(instructions?|rules?|guidelines?|restrictions?)/gi,
+  /ignore\s+(all\s+)?(previous|prior|above|system|earlier)\s*(instructions?|prompts?|rules?|directives?|constraints?)/i,
+  /forget\s+(everything|all|your\s+role|previous|what\s+you|instructions?)/i,
+  /disregard\s+(previous|prior|all|above|earlier|any)/i,
+  /override\s+(previous|prior|system|default|safety|all)\s*(instructions?|rules?|prompts?|settings?)/i,
+  /do\s+not\s+(follow|obey|comply\s+with)\s+(your|the|previous|system)(\s+\w+)?\s*(instructions?|rules?|guidelines?)/i,
+  /never\s+mind\s+(the|your|previous|above)\s*(instructions?|rules?|prompt)/i,
+  /skip\s+(the|all|previous|above)(\s+\w+)?\s*(instructions?|rules?|guidelines?|restrictions?)/i,
   // 常见指令劫持 — 中文
-  /忽略\s*(以上|之前|上述|先前的?|所有|全部)?\s*(指令|规则|提示|设定|约束|要求|限制)/gi,
-  /忘记\s*(你的?|所有|之前|以上)?\s*(角色|指令|规则|设定|任务|身份)/gi,
-  /抛弃\s*(以上|之前|所有)?\s*(指令|规则|设定|约束)/gi,
-  /不要\s*(遵守|遵循|执行|理会)\s*(你的?|之前|以上|系统)?\s*(指令|规则|设定|约束)/gi,
-  /跳过\s*(所有|之前|以上)?\s*(指令|规则|限制|约束)/gi,
-  /你的新任务是/gi,
-  /重新设定/gi,
-  /重置你的/gi,
+  /忽略\s*(以上|之前|上述|先前的?|所有|全部)?\s*的?\s*\S*?\s*(指令|规则|提示|设定|约束|要求|限制)/i,
+  /忘记\s*(你的?|所有|之前|以上)?\s*(角色|指令|规则|设定|任务|身份)/i,
+  /抛弃\s*(以上|之前|所有)?\s*(指令|规则|设定|约束)/i,
+  /不要\s*(遵守|遵循|执行|理会)\s*(你的?|之前|以上|系统)?\s*(指令|规则|设定|约束)/i,
+  /跳过\s*(所有|之前|以上)?\s*(指令|规则|限制|约束)/i,
+  /你的新任务是/i,
+  /重新设定/i,
+  /重置你的/i,
   // 角色扮演劫持 — 英文
-  /你现在是|从现在开始你|请扮演|act as|you are now|pretend (to be|you)|you're now/gi,
-  /扮演\s*(一个|一名|一位)?\s*(新|不同|其他|别的)/gi,
-  /从现在起\s*(你|你的)/gi,
+  /你现在是|从现在开始你|请扮演|act as|you are now|pretend (to be|you)|you're now/i,
+  /扮演\s*(一个|一名|一位)?\s*(新|不同|其他|别的)/i,
+  /从现在起\s*(你|你的)/i,
   // 分隔符绕过检测：用分隔符/Unicode拆字/同形字符绕过关键词
   /s[\s\-._]?y[\s\-._]?s[\s\-._]?t[\s\-._]?e[\s\-._]?m\s*[:|>]/im,
   /a[\s\-._]?s[\s\-._]?s[\s\-._]?i[\s\-._]?s[\s\-._]?t[\s\-._]?a[\s\-._]?n[\s\-._]?t\s*[:|>]/im,
   // 输出格式劫持
-  /输出\s*[:：]\s*\{/gi,
-  /return\s+json|respond\s+(in\s+)?json|格式化?为\s*json/gi,
+  /输出\s*[:：]\s*\{/i,
+  /return\s+json|respond\s+(in\s+)?json|格式化?为\s*json/i,
   // 隐藏控制字符（零宽字符、RTL 覆盖等）
-  /[​-‍‪-‮⁦-⁩﻿]/g,
+  /[\u200B-\u200D\u202A-\u202E\u2066-\u2069\uFEFF]/,
 ]
 
 /**
@@ -70,7 +70,7 @@ export function sanitizeUntrusted(input: string | null | undefined): string {
   let text = String(input)
 
   // 1. 移除零宽字符（常用于隐藏注入）
-  text = text.replace(/[​-‍‪-‮⁦-⁩﻿]/g, '')
+  text = text.replace(/[\u200B-\u200D\u202A-\u202E\u2066-\u2069\uFEFF]/g, '')
 
   // 2. 行级过滤：把命中注入模式的整行替换为占位符
   const lines = text.split(/\r?\n/)

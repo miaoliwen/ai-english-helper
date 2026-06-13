@@ -40,23 +40,15 @@ export interface DeepSeekMessage {
 
 export interface ModelSettings {
   chatModel: string
-  chatBaseUrl: string
-  chatApiKey: string
   visionModel: string
-  visionBaseUrl: string
-  visionApiKey: string
 }
 
-/** 单个模型预设。 */
 export interface ModelPreset {
   id: string
   name: string
-  baseUrl: string
-  apiKey: string
   modelId: string
 }
 
-/** 完整的模型预设集合：对话 + 视觉，各自带激活项。 */
 export interface ModelPresets {
   chat: ModelPreset[]
   vision: ModelPreset[]
