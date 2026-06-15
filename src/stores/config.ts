@@ -137,20 +137,17 @@ export const useConfigStore = defineStore('config', () => {
 
   async function fetchServerModels(): Promise<ServerModelConfig[]> {
     try {
-      const token = localStorage.getItem('aieh-access-token') || '';
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      const response = await fetch(`${baseUrl}/api/models/server`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return (data.models || []).map((m: any) => ({
+      // 走统一的 api 客户端，复用其 access token 与自动刷新逻辑，
+      // 不再从 localStorage 取 'aieh-access-token'（该 key 从未被写入，会导致永远 401）。
+      const { api } = await import('../services/api');
+      const data = await api.get('/api/models/server');
+      return (data?.models || []).map((m: any) => ({
         id: m.id,
         name: m.name,
         modelId: m.modelId,
         type: m.type,
         providerName: m.providerName,
-        available: true,
+        available: m.available !== false,
       }));
     } catch {
       return [];

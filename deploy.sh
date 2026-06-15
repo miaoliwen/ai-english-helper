@@ -38,12 +38,6 @@ else
   if [ -z "$jwt_ref_in" ]; then
     jwt_ref_in=$(openssl rand -base64 32 2>/dev/null || uuidgen 2>/dev/null || echo "auto-generated-secret-change-me")
   fi
-  read -rp "AI_CHAT_API_KEY: " chat_key
-  read -rp "AI_CHAT_BASE_URL [https://api.deepseek.com]: " chat_url
-  chat_url=${chat_url:-https://api.deepseek.com}
-  read -rp "AI_VISION_API_KEY: " vision_key
-  read -rp "AI_VISION_BASE_URL [https://api.openai.com]: " vision_url
-  vision_url=${vision_url:-https://api.openai.com}
   read -rp "部署域名（留空 = http://localhost）: " domain
   cors_origin=${domain:-http://localhost}
 
@@ -54,10 +48,6 @@ JWT_SECRET="${jwt_in}"
 JWT_REFRESH_SECRET="${jwt_ref_in}"
 PORT=3001
 CORS_ORIGIN=${cors_origin}
-AI_CHAT_API_KEY=${chat_key}
-AI_CHAT_BASE_URL=${chat_url}
-AI_VISION_API_KEY=${vision_key}
-AI_VISION_BASE_URL=${vision_url}
 ENVEOF
 
   ok "配置已写入 $ENV_FILE"

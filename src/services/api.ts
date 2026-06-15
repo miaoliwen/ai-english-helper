@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 class ApiClient {
   private accessToken: string | null = null
@@ -96,6 +96,9 @@ class ApiClient {
   logout() { this.clearTokens() }
 
   async getMe() { return this.request('/api/auth/me') }
+
+  /** 通用 GET，供其它 store 复用鉴权头与刷新逻辑 */
+  async get(path: string) { return this.request(path) }
 
   // Sync
   async getSessions() { return this.request('/api/sync/sessions') }

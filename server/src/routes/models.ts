@@ -7,7 +7,13 @@ export default async function modelsRoutes(app: FastifyInstance) {
     const models = await getEnabledServerModels();
     return {
       models: models.map(m => ({
-        id: m.id, modelId: m.modelId, name: m.name, type: m.type, providerName: m.provider.name,
+        id: m.id,
+        modelId: m.modelId,
+        name: m.name,
+        type: m.type,
+        providerName: m.provider.name,
+        // 与前端 ServerModelConfig 契约一致：标记可用
+        available: m.enabled && m.provider.enabled,
       })),
     };
   });

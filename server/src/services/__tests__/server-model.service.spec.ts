@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import prisma from '../../utils/db.js';
 import { createProvider } from '../provider.service.js';
 import { getServerModels, createServerModel, updateServerModel, getEnabledServerModels } from '../server-model.service.js';
@@ -11,6 +11,12 @@ describe('server-model.service', () => {
     await prisma.provider.deleteMany();
     const p = await createProvider({ name: 'Test', baseUrl: 'https://api.test.com', apiKey: 'sk-test', format: 'openai' });
     providerId = p.id;
+  });
+
+  afterAll(async () => {
+    await prisma.serverModel.deleteMany();
+    await prisma.provider.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('createServerModel creates a model', async () => {

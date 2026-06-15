@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
 import App from './App.vue'
+import { useAuthStore } from '@/stores/auth'
 import './style.css'
 
 // GitHub Pages SPA fallback: 恢复 404.html 暂存的原始路径,
@@ -20,7 +21,6 @@ app.use(pinia)
 app.use(router)
 
 // 初始化认证状态（检查本地 refresh token）
-const { useAuthStore } = await import('@/stores/auth')
 const auth = useAuthStore()
 auth.init()
 

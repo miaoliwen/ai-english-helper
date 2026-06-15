@@ -1,11 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import prisma from '../../utils/db.js';
 import { createProvider, getProviders, updateProvider, deleteProvider } from '../provider.service.js';
 
 describe('provider.service', () => {
   beforeEach(async () => {
+    // 先删依赖 provider 的 ServerModel，避免外键约束残留 / 跨 spec 顺序依赖
     await prisma.serverModel.deleteMany();
     await prisma.provider.deleteMany();
+  });
+
+  afterAll(async () => {
+    // 全套 spec 共享同一 SQLite，末尾也清表，避免污染后续 spec
+    await prisma.serverModel.deleteMany();
+    await prisma.provider.deleteMany();
+    await prisma.$disconnect();
   });
 
   it('createProvider creates a provider with encrypted apiKey', async () => {

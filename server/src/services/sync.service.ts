@@ -1,5 +1,12 @@
 import prisma from '../utils/db.js';
 
+export class NotFoundError extends Error {
+  constructor(message = 'NOT_FOUND') {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+}
+
 export async function getSessions(userId: string) {
   return prisma.chatSession.findMany({
     where: { userId },
@@ -12,23 +19,37 @@ export async function getSession(userId: string, id: string) {
   return prisma.chatSession.findFirst({ where: { id, userId } });
 }
 
-export async function upsertSession(userId: string, data: { id?: string; title?: string; messages: any[]; ocrId?: string }) {
-  const payload = {
-    userId,
-    title: data.title || null,
-    messages: JSON.stringify(data.messages),
-    ocrId: data.ocrId || null,
-  };
+export async function upsertSession(
+  userId: string,
+  data: { id?: string; title?: string; messages: any[]; ocrId?: string },
+) {
+  // 严格基于 userId 鉴权：必须先校验该 session 属于当前用户
   if (data.id) {
-    return prisma.chatSession.update({ where: { id: data.id }, data: payload });
+    const existing = await prisma.chatSession.findFirst({ where: { id: data.id, userId } });
+    if (!existing) throw new NotFoundError();
+    // 仅更新允许的字段，不要回写 userId（避免 IDOR 窃取）
+    return prisma.chatSession.update({
+      where: { id: data.id },
+      data: {
+        title: data.title ?? null,
+        messages: JSON.stringify(data.messages ?? []),
+        ocrId: data.ocrId ?? null,
+      },
+    });
   }
-  const { id: _, ...rest } = payload as any;
-  return prisma.chatSession.create({ data: rest });
+  return prisma.chatSession.create({
+    data: {
+      userId,
+      title: data.title ?? null,
+      messages: JSON.stringify(data.messages ?? []),
+      ocrId: data.ocrId ?? null,
+    },
+  });
 }
 
 export async function deleteSession(userId: string, id: string) {
   const session = await prisma.chatSession.findFirst({ where: { id, userId } });
-  if (!session) throw new Error('NOT_FOUND');
+  if (!session) throw new NotFoundError();
   return prisma.chatSession.delete({ where: { id } });
 }
 
@@ -36,15 +57,18 @@ export async function getFavorites(userId: string) {
   return prisma.favorite.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
 }
 
-export async function addFavorite(userId: string, data: { title: string; type: string; content: string; ocrId?: string; chatId?: string; tags?: string[] }) {
+export async function addFavorite(
+  userId: string,
+  data: { title: string; type: string; content: string; ocrId?: string; chatId?: string; tags?: string[] },
+) {
   return prisma.favorite.create({
     data: {
       userId,
       title: data.title,
       type: data.type,
       content: data.content,
-      ocrId: data.ocrId || null,
-      chatId: data.chatId || null,
+      ocrId: data.ocrId ?? null,
+      chatId: data.chatId ?? null,
       tags: data.tags ? JSON.stringify(data.tags) : null,
     },
   });
@@ -52,7 +76,7 @@ export async function addFavorite(userId: string, data: { title: string; type: s
 
 export async function deleteFavorite(userId: string, id: string) {
   const fav = await prisma.favorite.findFirst({ where: { id, userId } });
-  if (!fav) throw new Error('NOT_FOUND');
+  if (!fav) throw new NotFoundError();
   return prisma.favorite.delete({ where: { id } });
 }
 
@@ -61,11 +85,11 @@ export async function getOCRResults(userId: string) {
 }
 
 export async function createOCRResult(userId: string, data: { text: string; markdown: string; imageBase64?: string }) {
-  return prisma.oCRResult.create({ data: { userId, text: data.text, markdown: data.markdown, imageBase64: data.imageBase64 || null } });
+  return prisma.oCRResult.create({ data: { userId, text: data.text, markdown: data.markdown, imageBase64: data.imageBase64 ?? null } });
 }
 
 export async function deleteOCRResult(userId: string, id: string) {
   const ocr = await prisma.oCRResult.findFirst({ where: { id, userId } });
-  if (!ocr) throw new Error('NOT_FOUND');
+  if (!ocr) throw new NotFoundError();
   return prisma.oCRResult.delete({ where: { id } });
 }

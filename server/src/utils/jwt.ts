@@ -14,6 +14,7 @@ const JWT_REFRESH_SECRET = requireEnv('JWT_REFRESH_SECRET');
 export interface TokenPayload {
   userId: string;
   email: string;
+  role?: string;
 }
 
 export function signAccessToken(payload: TokenPayload): string {

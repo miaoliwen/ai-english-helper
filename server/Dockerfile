@@ -14,4 +14,4 @@ RUN npx tsc
 RUN mkdir -p /app/data
 
 EXPOSE 3001
-CMD ["node", "dist/app.js"]
+CMD ["sh", "-c", "npx prisma db push && node dist/app.js"]

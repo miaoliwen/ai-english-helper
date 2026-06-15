@@ -2,17 +2,24 @@ import prisma from '../utils/db.js';
 import { hashPassword, comparePassword } from '../utils/password.js';
 import { signAccessToken, signRefreshToken, TokenPayload } from '../utils/jwt.js';
 
+/** 首位注册用户提升为 admin，之后注册为普通 user。便于生产首次部署引导。 */
+async function resolveRoleForNewUser(): Promise<string> {
+  const count = await prisma.user.count();
+  return count === 0 ? 'admin' : 'user';
+}
+
 export async function register(email: string, password: string, nickname?: string) {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) throw new Error('EMAIL_EXISTS');
 
   const hashed = await hashPassword(password);
+  const role = await resolveRoleForNewUser();
   const user = await prisma.user.create({
-    data: { email, password: hashed, nickname },
+    data: { email, password: hashed, nickname, role },
   });
-  const payload: TokenPayload = { userId: user.id, email: user.email };
+  const payload: TokenPayload = { userId: user.id, email: user.email, role: user.role };
   return {
-    user: { id: user.id, email: user.email, nickname: user.nickname },
+    user: { id: user.id, email: user.email, nickname: user.nickname, role: user.role },
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
   };
@@ -25,9 +32,9 @@ export async function login(email: string, password: string) {
   const valid = await comparePassword(password, user.password);
   if (!valid) throw new Error('INVALID_CREDENTIALS');
 
-  const payload: TokenPayload = { userId: user.id, email: user.email };
+  const payload: TokenPayload = { userId: user.id, email: user.email, role: user.role };
   return {
-    user: { id: user.id, email: user.email, nickname: user.nickname },
+    user: { id: user.id, email: user.email, nickname: user.nickname, role: user.role },
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
   };
@@ -39,7 +46,7 @@ export async function refresh(token: string) {
   const user = await prisma.user.findUnique({ where: { id: payload.userId } });
   if (!user) throw new Error('USER_NOT_FOUND');
 
-  const newPayload: TokenPayload = { userId: user.id, email: user.email };
+  const newPayload: TokenPayload = { userId: user.id, email: user.email, role: user.role };
   return {
     accessToken: signAccessToken(newPayload),
     refreshToken: signRefreshToken(newPayload),
@@ -49,7 +56,7 @@ export async function refresh(token: string) {
 export async function getUser(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error('USER_NOT_FOUND');
-  return { id: user.id, email: user.email, nickname: user.nickname };
+  return { id: user.id, email: user.email, nickname: user.nickname, role: user.role };
 }
 
 export async function updateUser(userId: string, data: { nickname?: string; password?: string }) {
@@ -60,5 +67,5 @@ export async function updateUser(userId: string, data: { nickname?: string; pass
     where: { id: userId },
     data: updateData,
   });
-  return { id: user.id, email: user.email, nickname: user.nickname };
+  return { id: user.id, email: user.email, nickname: user.nickname, role: user.role };
 }
